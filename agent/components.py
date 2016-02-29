@@ -3,6 +3,7 @@ import numpy as np
 
 
 DEFAULT_BORDER = 1
+NODATA = -128
 
 
 class Grid(object):
@@ -17,6 +18,12 @@ class Grid(object):
         x_size = ncols + (2 * self._border_size)
         y_size = nrows + (2 * self._border_size)
         self._grid = np.zeros((y_size, x_size), dtype=np.int8)
+
+        # make borders NODATA to prevent inclusion in calcs
+        self._grid[0] = NODATA
+        self._grid[-1] = NODATA
+        self._grid[:,0] = NODATA
+        self._grid[:,-1] = NODATA
 
     @classmethod
     def from_file(cls, fd, border=DEFAULT_BORDER):

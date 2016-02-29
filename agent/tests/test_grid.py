@@ -5,6 +5,7 @@ import numpy as np
 import numpy.testing as npt
 
 import components
+from components import NODATA
 
 
 def generate_test_grid():
@@ -41,10 +42,12 @@ def test_write_grid():
 def test_view():
     # for coords, get a view square
     grid = generate_test_grid()
+    assert grid._grid.dtype == np.int8
+
     exp = np.array([1,2,3,7,8,9,11,12,13]).reshape((3,3))
     res = grid.view(1,1,size=1)
     npt.assert_equal(exp, res)
 
-    exp = np.array([0,0,0,0,1,2,0,7,8]).reshape((3,3))
+    exp = np.array([NODATA,NODATA,NODATA,NODATA,1,2,NODATA,7,8]).reshape((3,3))
     res = grid.view(0,0,size=1)
     npt.assert_equal(exp, res)
