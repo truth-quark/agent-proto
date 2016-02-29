@@ -1,9 +1,16 @@
 import copy
 import random
 
+import numpy as np
+
 from components import Grid
 
-# TODO: create a world and populate with agents
+
+Y_OFFSETS = (-1, -1, 0, 1, 1, 1, 0, -1)
+X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
+
+
+# TODO: create world and populate with agents
 
 # start with simple rules
 # agents move one cell at a time
@@ -22,6 +29,11 @@ class BasicWorld(object):
             self.food_grid = Grid.from_file(fd)
             self.orig_food_grid = copy.copy(self.food_grid)
 
+    def on_end_round(self):
+        # allow the energy source to recover slowly
+        changed = np.where(self.food_grid != self.orig_food_grid)
+        self.food_grid[changed] += 1  # TODO: modify recovery rate?
+
 
 class BasicAgent(object):
 
@@ -34,8 +46,24 @@ class BasicAgent(object):
         self.id = _id
         self.vision = vision
         self.metabolism = metabolism
+        self.init_metabolism = metabolism
         self.energy = energy
+        self.init_energy = energy
+        self.coords = None
 
+    def __str__(self):
+        text = 'Agent {}: vis={} metabol={} energy={} coords={}'
+        args = (self.id, self.vision, self.metabolism, self.energy, self.coords)
+        return text.format(*args)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def is_alive(self):
+        return self.energy > 0
+
+    def is_dead(self):
+        return self.energy <= 0
 
 
 def generate_agents_deterministic():
@@ -58,12 +86,105 @@ def generate_coords_deterministic():
     return zip(yc, xc)
 
 
-def run_simulation(food_grid_path):
-    world = BasicWorld(food_grid_path)
-    agents = generate_agents_deterministic()
-    start_coords = generate_coords_deterministic()
+
+class Simulation(object):
+
+    def __init__(self, food_grid_path):
+        self.world = BasicWorld(food_grid_path)
+        self.agents = generate_agents_deterministic()
+
+        # place each agent in the world
+        start_coords = generate_coords_deterministic()
+        for c, a in zip(start_coords, self.agents):
+            a.coords = c
+
+        # stats
+        self.average_energy = []
+        self.average_metabolism = []
+        self.num_dead_agents = []
+
+    def run(self, num_rounds=25):
+        for n in range(num_rounds):
+            for a in self.agents:
+                if a.is_dead():
+                    continue
+
+                view = self.world.food_grid.view(*a.coords, size=1)
+                adj_crd = self._best_adj_cell(a.coords, view)
+
+                if adj_crd:
+                    # TODO: shove into the agent class?
+                    a.coords = adj_crd
+                    a.energy += self.world.food_grid[adj_crd]
+                    self.world.food_grid[adj_crd] = -1  # remove food from cell
+                else:
+                    # TODO: better deterministic search algorithm?
+                    init_dir = a.id
+
+                    while True:
+                        init_dir %= 8
+                        tmp = (a.coords[0] + Y_OFFSETS[init_dir],
+                               a.coords[1] + X_OFFSETS[init_dir])
+
+                        if self.world.food_grid[tmp] >= 0:  # avoid NODATA
+                            a.coords = tmp
+                            break
+                        else:
+                            init_dir += 1
+
+                a.energy -= a.metabolism  # agent consumes energy
+
+            self.collect_stats()
+
+    def collect_stats(self):
+        # collect basic stats at the end of each round
+        live_agents = [a for a in self.agents if a.is_alive()]
+        n_agents = len(live_agents)
+
+        avg_energy = float(sum(a.energy for a in live_agents)) / n_agents
+        self.average_energy.append(round(avg_energy, 2))
+        avg_metabolism = float(sum(a.metabolism for a in live_agents)) / n_agents
+        self.average_metabolism.append(round(avg_metabolism, 2))
+        self.num_dead_agents.append(sum(a.is_dead() for a in self.agents))
+
+    def report(self):
+        from pprint import pprint
+
+        print 'Per turn data:'
+        print '--------------'
+        print 'Num dead agents:', self.num_dead_agents
+        print 'Average energy: ', self.average_energy
+        print 'Average metabolism: ', self.average_metabolism
+
+        live_agents = [a for a in self.agents if a.is_alive()]
+        live_agents.sort(key=lambda x: x.energy, reverse=True)
+        pprint(live_agents)
+
+    def _best_adj_cell(self, coords, view):
+        best = -10
+        best_crd = None
+
+        for i, (yoff, xoff) in enumerate(zip(Y_OFFSETS, X_OFFSETS)):
+            adj = (coords[0] + yoff, coords[1] + xoff)
+
+            # ignore adjacent cells occupyied by other agents
+            found = False
+            for a in self.agents:
+                if a.coords == adj:
+                    found = True
+                    break
+
+            if not found:
+                adj_energy = self.world.food_grid[adj]
+
+                if adj_energy > 0 and adj_energy > best:
+                    best_crd = adj
+                    best = adj_energy
+
+        return best_crd
 
 
 if __name__ == '__main__':
-    import os; print os.getcwd()
-    run_simulation('../data/basic_grid.txt')
+    simulation = Simulation('../data/basic_grid.txt')
+    simulation.run()
+    simulation.report()
