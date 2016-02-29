@@ -1,9 +1,13 @@
 import csv
 import numpy as np
 
+
+DEFAULT_BORDER = 1
+
+
 class Grid(object):
 
-    def __init__(self, nrows, ncols, border=1):
+    def __init__(self, nrows, ncols, border=DEFAULT_BORDER):
         if border !=1:
             raise NotImplementedError
 
@@ -15,7 +19,7 @@ class Grid(object):
         self._grid = np.zeros((y_size, x_size), dtype=np.int8)
 
     @classmethod
-    def from_file(cls, fd, border=1):
+    def from_file(cls, fd, border=DEFAULT_BORDER):
         """ TODO """
         grid_values = []
         for row in csv.reader(fd, delimiter=','):
@@ -51,7 +55,7 @@ class Grid(object):
         """TODO: coord can be a slice or a cell"""
         if hasattr(coords, '__len__'):  # TODO: test is a container
             # treat as a tuple of coordinates
-            # TODO: get rid of the isinstance
+            # TODO: replace isinstance
             f = lambda(e): self._slice_offset(e) if isinstance(e, slice) else e + self._border_size
             offset = tuple(f(e) for e in coords)
         elif isinstance(coords, slice):
@@ -85,5 +89,7 @@ class Grid(object):
     def ncols(self):
         return self._grid.shape[1] - (2 * self._border_size)
 
-    def view(self, coord, border):
-        raise NotImplementedError
+    def view(self, y, x, size):
+        """TODO: coords needs to be tuple of ints"""
+        y, x = [self._offset_coord(i) for i in (y,x)]
+        return self._grid[y - size:y + size + 1, x - size:x + size + 1]
