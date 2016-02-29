@@ -9,7 +9,7 @@ from components import NODATA
 
 
 def generate_test_grid():
-    fd = StringIO.StringIO('1,2,3\n7,8,9\n11,12,13\n18,19,20\n')
+    fd = StringIO.StringIO('123\n789\n234\n890\n')
     return components.Grid.from_file(fd)
 
 
@@ -44,7 +44,7 @@ def test_view():
     grid = generate_test_grid()
     assert grid._grid.dtype == np.int8
 
-    exp = np.array([1,2,3,7,8,9,11,12,13]).reshape((3,3))
+    exp = np.array([1,2,3,7,8,9,2,3,4]).reshape((3,3))
     res = grid.view(1,1,size=1)
     npt.assert_equal(exp, res)
 

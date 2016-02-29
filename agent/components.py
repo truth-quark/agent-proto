@@ -26,12 +26,23 @@ class Grid(object):
         self._grid[:,-1] = NODATA
 
     @classmethod
-    def from_file(cls, fd, border=DEFAULT_BORDER):
+    def from_csv_file(cls, fd, border=DEFAULT_BORDER):
         """ TODO """
         grid_values = []
         for row in csv.reader(fd, delimiter=','):
             values = [int(i) for i in row]
             grid_values.append(values)
+
+        raise NotImplementedError
+
+    @classmethod
+    def from_file(cls, fd, border=DEFAULT_BORDER):
+        """ TODO """
+        grid_values = []
+        for line in fd.readlines():
+            if line:
+                values = [int(c) for c in line.strip()]
+                grid_values.append(values)
 
         nrows, ncols = len(grid_values), len(grid_values[0])
         grid = Grid(nrows, ncols, border)
