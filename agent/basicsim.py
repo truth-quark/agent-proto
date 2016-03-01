@@ -126,16 +126,14 @@ class Simulation(object):
             a.coords = c
 
         # stats
+        self.round = None
         self.average_energy = []
         self.average_metabolism = []
         self.num_dead_agents = []
 
-    def run(self, num_rounds=25):
+    def run(self, num_rounds=200):
         for n in range(num_rounds):
-            for a in self.agents:
-                if a.is_dead():
-                    continue
-
+            for a in self.live_agents:
                 view = self.world.food_grid.view(*a.coords, size=1)
                 adj_crd = self._best_adj_cell(a.coords, view)
 
@@ -147,6 +145,7 @@ class Simulation(object):
                 else:
                     # TODO: better deterministic search algorithm?
                     init_dir = a.id
+                    count = 0
 
                     while True:
                         init_dir %= 8
@@ -160,20 +159,35 @@ class Simulation(object):
                         else:
                             init_dir += 1
 
+                        count += 1
+                        if count == 8:
+                            break  # HACK: get the agent to wait for regrowth
+
                 a.on_turn_end()
                 if a.is_dead():
                     a.last_view = self.world.food_grid.view(*a.coords, size=1)
 
-            self.collect_stats()
+            if self.live_agents:
+                self.collect_stats()
+                # TODO: self.world.on_end_round()
+            else:
+                break
+        self.round = n
+
+    @property
+    def live_agents(self):
+        return [a for a in self.agents if a.is_alive()]
 
     def collect_stats(self):
         # collect basic stats at the end of each round
-        live_agents = [a for a in self.agents if a.is_alive()]
-        n_agents = len(live_agents)
+        n_agents = len(self.live_agents)
 
-        avg_energy = float(sum(a.energy for a in live_agents)) / n_agents
+        if not n_agents:
+            return
+
+        avg_energy = float(sum(a.energy for a in self.live_agents)) / n_agents
         self.average_energy.append(round(avg_energy, 2))
-        avg_metabolism = float(sum(a.metabolism for a in live_agents)) / n_agents
+        avg_metabolism = float(sum(a.metabolism for a in self.live_agents)) / n_agents
         self.average_metabolism.append(round(avg_metabolism, 2))
         self.num_dead_agents.append(sum(a.is_dead() for a in self.agents))
 
@@ -188,6 +202,7 @@ class Simulation(object):
 
         print 'Per turn data:'
         print '--------------'
+        print 'Got to round:   ', self.round
         print 'Num dead agents:', self.num_dead_agents
         print 'Average energy: ', self.average_energy
         print 'Average metabolism: ', self.average_metabolism
