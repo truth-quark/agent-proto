@@ -49,9 +49,11 @@ class BasicAgent(object):
         self.init_metabolism = metabolism
         self._energy = energy
         self.init_energy = energy
-        self.coords = None
+        self._coords = None
 
+        self.move_history = []
         self.harvest_history = []
+        self.last_view = None
 
     def __str__(self):
         text = 'Agent {}: vis={} metabol={} energy={} coords={}'
@@ -76,6 +78,16 @@ class BasicAgent(object):
         prev = self._energy
         self._energy = value
         self.harvest_history.append(value - prev)
+
+    @property
+    def coords(self):
+        return self._coords
+
+    @coords.setter
+    def coords(self, _coords):
+        if self._coords:
+            self.move_history.append(self._coords)
+        self._coords = _coords
 
     def on_turn_end(self):
         self._energy -= self.metabolism
@@ -149,6 +161,8 @@ class Simulation(object):
                             init_dir += 1
 
                 a.on_turn_end()
+                if a.is_dead():
+                    a.last_view = self.world.food_grid.view(*a.coords, size=1)
 
             self.collect_stats()
 
@@ -166,6 +180,12 @@ class Simulation(object):
     def report(self):
         from pprint import pprint
 
+        def sub_report(_agent):
+            print _agent
+            print 'Harvests:', _agent.harvest_history
+            print 'Moves:', _agent.move_history
+            print
+
         print 'Per turn data:'
         print '--------------'
         print 'Num dead agents:', self.num_dead_agents
@@ -178,17 +198,14 @@ class Simulation(object):
         print '\nLive Agents - Stats'
         print '---------------------'
         for a in live_agents:
-            print a
-            print a.harvest_history
-            print
+            sub_report(a)
 
         print '\nDead Agents - Stats'
         print '---------------------'
         dead_agents = [a for a in self.agents if a.is_dead()]
         for a in dead_agents:
-            print a
-            print a.harvest_history
-            print
+            sub_report(a)
+            print a.last_view
 
     def _best_adj_cell(self, coords, view):
         best = -10
