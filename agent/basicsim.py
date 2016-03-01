@@ -47,9 +47,11 @@ class BasicAgent(object):
         self.vision = vision
         self.metabolism = metabolism
         self.init_metabolism = metabolism
-        self.energy = energy
+        self._energy = energy
         self.init_energy = energy
         self.coords = None
+
+        self.harvest_history = []
 
     def __str__(self):
         text = 'Agent {}: vis={} metabol={} energy={} coords={}'
@@ -64,6 +66,19 @@ class BasicAgent(object):
 
     def is_dead(self):
         return self.energy <= 0
+
+    @property
+    def energy(self):
+        return self._energy
+
+    @energy.setter
+    def energy(self, value):
+        prev = self._energy
+        self._energy = value
+        self.harvest_history.append(value - prev)
+
+    def on_turn_end(self):
+        self._energy -= self.metabolism
 
 
 def generate_agents_deterministic():
@@ -128,11 +143,12 @@ class Simulation(object):
 
                         if self.world.food_grid[tmp] >= 0:  # avoid NODATA
                             a.coords = tmp
+                            a.energy += 0  # HACK: records no energy gained during turn
                             break
                         else:
                             init_dir += 1
 
-                a.energy -= a.metabolism  # agent consumes energy
+                a.on_turn_end()
 
             self.collect_stats()
 
@@ -158,7 +174,21 @@ class Simulation(object):
 
         live_agents = [a for a in self.agents if a.is_alive()]
         live_agents.sort(key=lambda x: x.energy, reverse=True)
-        pprint(live_agents)
+
+        print '\nLive Agents - Stats'
+        print '---------------------'
+        for a in live_agents:
+            print a
+            print a.harvest_history
+            print
+
+        print '\nDead Agents - Stats'
+        print '---------------------'
+        dead_agents = [a for a in self.agents if a.is_dead()]
+        for a in dead_agents:
+            print a
+            print a.harvest_history
+            print
 
     def _best_adj_cell(self, coords, view):
         best = -10
