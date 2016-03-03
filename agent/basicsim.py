@@ -114,7 +114,7 @@ class Simulation(object):
         self.average_metabolism = []
         self.num_dead_agents = []
 
-    def run(self, num_rounds=200):
+    def run(self, num_rounds):
         for n in range(num_rounds):
             if not(self.do_round()):
                 self.final_round = n+1
@@ -265,5 +265,5 @@ if __name__ == '__main__':
         food_grid = Grid.from_file(fd)
         agents = generate_agents_deterministic()
         simulation = Simulation(food_grid, agents)
-        simulation.run()
+        simulation.run(200)
         simulation.report()
