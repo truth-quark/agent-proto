@@ -38,7 +38,7 @@ class BasicWorld(object):
 class BasicAgent(object):
 
     # TODO: add a death after x number of turns?
-    def __init__(self, _id, vision, metabolism, energy):
+    def __init__(self, _id, vision, metabolism, energy, coords=None):
         # vision = number of cells the agent can see in all dirs
         # metabolism = rate at which energy is used per turn
         # energy = current stock of food
@@ -49,11 +49,11 @@ class BasicAgent(object):
         self.init_metabolism = metabolism
         self._energy = energy
         self.init_energy = energy
-        self._coords = None
+        self._coords = coords
 
         self.move_history = []
         self.harvest_history = []
-        self.last_view = None
+        self.last_view = None  # snapshot of area at final turn
 
     def __str__(self):
         text = 'Agent {}: vis={} metabol={} energy={} coords={}'
@@ -93,37 +93,11 @@ class BasicAgent(object):
         self._energy -= self.metabolism
 
 
-def generate_agents_deterministic():
-    # create 25 agents from pre-canned data (1% coverage of the grid)
-    vision = [1, 2, 2, 1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 2,
-              2, 1, 2, 2, 1, 2, 2, 1, 1, 2, 2]
-
-    metabolism = [2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 2, 2, 1, 2,
-                  2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2]
-
-    energy = [12, 25, 16, 26, 27, 22, 25, 24, 16, 15, 25, 20, 24,
-              17, 23, 12, 18, 26, 20, 26, 23, 26, 16, 19, 26]
-
-    return [BasicAgent(_id, v, m, e) for _id, (v, m, e) in enumerate(zip(vision, metabolism, energy))]
-
-
-def generate_coords_deterministic():
-    xc = [49, 28, 6, 41, 26, 10, 0, 19, 5, 47, 2, 18, 18, 27, 21, 31, 3, 40, 29, 9, 43, 7, 4, 34, 33]
-    yc = [48, 2, 48, 24, 17, 33, 43, 8, 26, 47, 2, 18, 29, 38, 14, 31, 6, 7, 7, 1, 7, 19, 3, 25, 12]
-    return zip(yc, xc)
-
-
-
 class Simulation(object):
 
-    def __init__(self, food_grid_path):
+    def __init__(self, food_grid_path, agents):
         self.world = BasicWorld(food_grid_path)
-        self.agents = generate_agents_deterministic()
-
-        # place each agent in the world
-        start_coords = generate_coords_deterministic()
-        for c, a in zip(start_coords, self.agents):
-            a.coords = c
+        self.agents = agents
 
         # stats
         self.round = None
@@ -196,7 +170,7 @@ class Simulation(object):
 
         def sub_report(_agent):
             print _agent
-            print 'Harvests:', _agent.harvest_history
+            print 'Energy harvests:', _agent.harvest_history
             print 'Moves:', _agent.move_history
             print
 
@@ -220,10 +194,10 @@ class Simulation(object):
         dead_agents = [a for a in self.agents if a.is_dead()]
         for a in dead_agents:
             sub_report(a)
-            print a.last_view
+            print 'Final view:\n', a.last_view
 
     def _best_adj_cell(self, coords, view):
-        best = -10
+        best = -10  # TODO: to NODATA?
         best_crd = None
 
         for i, (yoff, xoff) in enumerate(zip(Y_OFFSETS, X_OFFSETS)):
@@ -246,7 +220,27 @@ class Simulation(object):
         return best_crd
 
 
+def generate_agents_deterministic():
+    # create 25 agents from pre-canned data (1% coverage of the grid)
+    vision = [1, 2, 2, 1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 2,
+              2, 1, 2, 2, 1, 2, 2, 1, 1, 2, 2]
+
+    metabolism = [2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 2, 2, 1, 2,
+                  2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2]
+
+    energy = [12, 25, 16, 26, 27, 22, 25, 24, 16, 15, 25, 20, 24,
+              17, 23, 12, 18, 26, 20, 26, 23, 26, 16, 19, 26]
+
+    xc = [49, 28, 6, 41, 26, 10, 0, 19, 5, 47, 2, 18, 18, 27, 21, 31, 3, 40, 29, 9, 43, 7, 4, 34, 33]
+    yc = [48, 2, 48, 24, 17, 33, 43, 8, 26, 47, 2, 18, 29, 38, 14, 31, 6, 7, 7, 1, 7, 19, 3, 25, 12]
+    coords = zip(yc, xc)
+
+    return [BasicAgent(_id, v, m, e, c) for _id, (v, m, e, c) in
+                enumerate(zip(vision, metabolism, energy, coords))]
+
+
 if __name__ == '__main__':
-    simulation = Simulation('../data/basic_grid.txt')
+    agents = generate_agents_deterministic()
+    simulation = Simulation('../data/basic_grid.txt', agents)
     simulation.run()
     simulation.report()
