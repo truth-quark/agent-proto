@@ -15,6 +15,10 @@ X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
 # do one activity per turn (move, get food)?
 # do a fixed number of turns first, then add die_after attribute
 
+# Other features:
+# energy cells that can become damaged/not recover - force agents to explore
+# need for travel to water
+
 # viewing options:
 # lifetime stats for each agent, as a graph (graph harvests and consumption)
 # output images of the grid + agents on it, showing changes over time
@@ -105,54 +109,63 @@ class Simulation(object):
         self.agents = agents
 
         # stats
-        self.round = None
+        self.final_round = None
         self.average_energy = []
         self.average_metabolism = []
         self.num_dead_agents = []
 
     def run(self, num_rounds=200):
         for n in range(num_rounds):
-            for a in self.live_agents:
-                view = self.world.food_grid.view(*a.coords, size=1)
-                adj_crd = self._best_adj_cell(a.coords, view)
+            if not(self.do_round()):
+                self.final_round = n+1
+                return
 
-                if adj_crd:
-                    # TODO: shove into the agent class?
-                    a.coords = adj_crd
-                    a.energy += self.world.food_grid[adj_crd]
-                    self.world.food_grid[adj_crd] = -1  # remove food from cell
-                else:
-                    # TODO: better deterministic search algorithm?
-                    init_dir = a.id
-                    count = 0
+        self.final_round = num_rounds
+        return
 
-                    while True:
-                        init_dir %= 8
-                        tmp = (a.coords[0] + Y_OFFSETS[init_dir],
-                               a.coords[1] + X_OFFSETS[init_dir])
+    def do_round(self):
+        """Run a single round or timestep of the simulation."""
+        for a in self.live_agents:
+            view = self.world.food_grid.view(*a.coords, size=1)
+            adj_crd = self._best_adj_cell(a.coords, view)
 
-                        if self.world.food_grid[tmp] >= 0:  # avoid NODATA
-                            a.coords = tmp
-                            a.energy += 0  # HACK: records no energy gained during turn
-                            break
-                        else:
-                            init_dir += 1
-
-                        count += 1
-                        if count == 8:
-                            break  # HACK: get the agent to wait for regrowth
-
-                a.on_end_turn()
-                if a.is_dead():
-                    # TODO: test saved view doesn't change over time
-                    a.last_view = self.world.food_grid.view(*a.coords, size=1)
-
-            if self.live_agents:
-                self.collect_stats()
-                self.world.on_end_round()
+            # TODO: following blocks are behaviour/move to agent class
+            if adj_crd:
+                # TODO: shove into the agent class?
+                a.coords = adj_crd
+                a.energy += self.world.food_grid[adj_crd]
+                self.world.food_grid[adj_crd] = -1  # remove food from cell
             else:
-                break
-        self.round = n
+                # TODO: better deterministic search algorithm?
+                init_dir = a.id
+                count = 0
+
+                while True:
+                    init_dir %= 8
+                    tmp = (a.coords[0] + Y_OFFSETS[init_dir],
+                           a.coords[1] + X_OFFSETS[init_dir])
+
+                    if self.world.food_grid[tmp] >= 0:  # avoid NODATA
+                        a.coords = tmp
+                        a.energy += 0  # HACK: records no energy gained during turn
+                        break
+                    else:
+                        init_dir += 1
+
+                    count += 1
+                    if count == 8:
+                        break  # HACK: get the agent to wait for regrowth
+
+            a.on_end_turn()
+            if a.is_dead():
+                # TODO: test saved view doesn't change over time
+                a.last_view = self.world.food_grid.view(*a.coords, size=1)
+
+        if self.live_agents:
+            self.collect_stats()
+            self.world.on_end_round()
+
+        return len(self.live_agents)
 
     @property
     def live_agents(self):
@@ -182,7 +195,7 @@ class Simulation(object):
 
         print 'Per turn data:'
         print '--------------'
-        print 'Got to round:   ', self.round
+        print 'Got to round:   ', self.final_round
         print 'Num dead agents:', self.num_dead_agents
         print 'Average energy: ', self.average_energy
         print 'Average metabolism: ', self.average_metabolism
