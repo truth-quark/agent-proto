@@ -42,4 +42,13 @@ def test_move_history():
 
 
 def test_energy_history():
-    raise NotImplementedError
+    agent = make_basic_agent()
+    assert agent.harvest_history == []
+    agent.energy = 25
+    assert agent.harvest_history == [2]
+    agent.energy -= 4
+    assert agent.harvest_history == [2, -4]
+
+    # NB: on_end_turn() shouldn't be recorded as an energy change
+    agent.on_end_turn()
+    assert agent.harvest_history == [2, -4]
