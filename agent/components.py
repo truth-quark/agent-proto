@@ -89,6 +89,15 @@ class Grid(object):
         s = slice(self._border_size, -self._border_size)
         return str(self._grid[s, s])
 
+    def __len__(self):
+        return len(self._grid) - (2 * self._border_size)
+
+    def __iter__(self):
+        """Yield all data rows without border cells."""
+        row_slice = slice(self._border_size, -self._border_size)
+        for i in range(len(self)):
+            yield self._grid[self._offset_coord(i), row_slice]
+
     def __getitem__(self, coords):
         return self._grid[self._offset_coord(coords)]
 
@@ -108,6 +117,6 @@ class Grid(object):
         return self._grid.shape[1] - (2 * self._border_size)
 
     def view(self, y, x, size):
-        """TODO: coords needs to be tuple of ints"""
+        """TODO: coords needs to be tuple of ints??"""
         y, x = [self._offset_coord(i) for i in (y,x)]
         return self._grid[y - size:y + size + 1, x - size:x + size + 1]

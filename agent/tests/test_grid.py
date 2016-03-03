@@ -19,6 +19,7 @@ def test_create_grid():
     assert grid.nrows == nrows
     assert grid.ncols == ncols
     assert grid.border_size == 1
+    assert len(grid) == 9
 
 
 def test_read_grid():
@@ -51,3 +52,15 @@ def test_view():
     exp = np.array([NODATA,NODATA,NODATA,NODATA,1,2,NODATA,7,8]).reshape((3,3))
     res = grid.view(0,0,size=1)
     npt.assert_equal(exp, res)
+
+
+def test_grid_iter():
+    grid = generate_test_grid()
+    exp = [[1,2,3], [7,8,9], [2,3,4], [8,9,0]]
+
+    for row, e in zip(grid, exp):
+        npt.assert_equal(row, e)
+
+
+def test_copy_grid():
+    raise NotImplementedError
