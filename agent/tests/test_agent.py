@@ -24,7 +24,7 @@ def test_on_end_turn():
     agent = make_basic_agent()
     agent.energy = energy
     agent.metabolism = metabolism
-    agent.on_turn_end()
+    agent.on_end_turn()
     assert agent.energy == energy - metabolism
 
 

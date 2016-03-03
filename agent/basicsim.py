@@ -36,7 +36,10 @@ class BasicWorld(object):
             r0[changed] += recovery_rate
 
 
+# FIXME: move behaviour/decision making into agent class
+# allows different types of agents to be used/make different decisions
 class BasicAgent(object):
+    """Simple agent with basic stats."""
 
     # TODO: add death after x number of turns?
     def __init__(self, _id, vision, metabolism, energy, coords=None):
@@ -90,8 +93,8 @@ class BasicAgent(object):
             self.move_history.append(coords)
         self._coords = coords
 
-    # TODO: refactor to on_end_turn()
-    def on_turn_end(self):
+    def on_end_turn(self):
+        """Callback to handle changes to the agent at the end of each turn."""
         self._energy -= self.metabolism
 
 
