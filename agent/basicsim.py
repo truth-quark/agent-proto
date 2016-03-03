@@ -137,7 +137,7 @@ class Simulation(object):
                 self.world.food_grid[adj_crd] = -1  # remove food from cell
             else:
                 # TODO: better deterministic search algorithm?
-                init_dir = a.id
+                init_dir = a.id  # FIXME: relies on id being numeric
                 count = 0
 
                 while True:
