@@ -193,13 +193,21 @@ class Simulation(object):
         return len(self.live_agents)
 
     def adjacent_agents(self, agent):
-        """Search around the given agent to see if any are adjacent."""
-        # TODO: could optimise/remove agents from search that are further out
+        """Scan around given agent for any adjacent agents."""
+
+        def close_range(i):
+            return range(i-1, i+2)
+
+        y, x = agent.coords
+        first_pass = [a for a in self.live_agents if a.coords[0] in close_range(y)]
+        second_pass = [a for a in first_pass if a.coords[1] in close_range(x)]
+
         adj_agents = {}
-        for i, adj_coord in enumerate(adjacent_coords(agent.coords)):
-            for a in self.live_agents:
-                if a.coords == adj_coord:
-                    adj_agents[i] = a
+        if second_pass:
+            for i, adj_coord in enumerate(adjacent_coords(agent.coords)):
+                for a in second_pass:
+                    if a.coords == adj_coord:
+                        adj_agents[i] = a
 
         return adj_agents
 
