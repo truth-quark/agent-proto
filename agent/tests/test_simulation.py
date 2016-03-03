@@ -26,8 +26,13 @@ def test_simulation_single_step():
 
 # run a full test of a small scale simulation
 def test_simulation():
-    simulation = generate_basic_simulation()
-    simulation.run(3)
+    sim = generate_basic_simulation()
+    sim.run(3)
+
+    agent = sim.live_agents[0]
+    assert len(sim.live_agents) == 1
+
+    # TODO: add more testing ...
 
 
 DATA = '''21000
