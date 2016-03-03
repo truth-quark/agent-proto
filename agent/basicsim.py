@@ -22,12 +22,10 @@ X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
 
 class BasicWorld(object):
 
-    def __init__(self, food_grid_path):
-        # grids for current food state & original state for respawns
-
-        with open(food_grid_path) as fd:
-            self.food_grid = Grid.from_file(fd)
-            self.orig_food_grid = copy.copy(self.food_grid)
+    def __init__(self, food_grid):
+        # grids for current food state & original state (for energy respawn)
+        self.food_grid = food_grid
+        self.orig_food_grid = copy.copy(food_grid)
 
     def on_end_round(self):
         # allow the energy source to recover slowly
@@ -37,7 +35,7 @@ class BasicWorld(object):
 
 class BasicAgent(object):
 
-    # TODO: add a death after x number of turns?
+    # TODO: add death after x number of turns?
     def __init__(self, _id, vision, metabolism, energy, coords=None):
         # vision = number of cells the agent can see in all dirs
         # metabolism = rate at which energy is used per turn
@@ -95,8 +93,8 @@ class BasicAgent(object):
 
 class Simulation(object):
 
-    def __init__(self, food_grid_path, agents):
-        self.world = BasicWorld(food_grid_path)
+    def __init__(self, food_grid, agents):
+        self.world = BasicWorld(food_grid)
         self.agents = agents
 
         # stats
@@ -240,7 +238,11 @@ def generate_agents_deterministic():
 
 
 if __name__ == '__main__':
-    agents = generate_agents_deterministic()
-    simulation = Simulation('../data/basic_grid.txt', agents)
-    simulation.run()
-    simulation.report()
+    food_grid_path = '../data/basic_grid.txt'
+
+    with open(food_grid_path) as fd:
+        food_grid = Grid.from_file(fd)
+        agents = generate_agents_deterministic()
+        simulation = Simulation(food_grid, agents)
+        simulation.run()
+        simulation.report()
