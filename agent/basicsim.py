@@ -142,7 +142,7 @@ class Simulation(object):
                         if count == 8:
                             break  # HACK: get the agent to wait for regrowth
 
-                a.on_turn_end()
+                a.on_end_turn()
                 if a.is_dead():
                     # TODO: test saved view doesn't change over time
                     a.last_view = self.world.food_grid.view(*a.coords, size=1)
