@@ -5,19 +5,21 @@ import basicsim
 import components
 
 
-def generate_food_grid():
+def generate_basicworld():
     fd = StringIO.StringIO('12\n00\n')
-    return components.Grid.from_file(fd)
+    food_grid = components.Grid.from_file(fd)
+    return basicsim.BasicWorld(food_grid)
 
 
-def test_basicworld():
-    food_grid = generate_food_grid()
-    world = basicsim.BasicWorld(food_grid)
+def test_harvest():
+    coords = (0,1)
+    world = generate_basicworld()
+    assert world.harvest(coords) == 2
+    assert world.food_grid[coords] == -1
 
 
-# TODO: add harvest_energy() to encapsulate the logic?
 def test_basicworld_respawn():
-    world = basicsim.BasicWorld(generate_food_grid())
+    world = generate_basicworld()
     crd = (0,1)
     assert world.food_grid[crd]
     world.food_grid[crd] = -1  # assume all energy harvested from cell

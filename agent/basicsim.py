@@ -31,6 +31,12 @@ class BasicWorld(object):
         self.food_grid = food_grid
         self.orig_food_grid = copy.deepcopy(food_grid)
 
+    def harvest(self, coords, post_harvest=-1):
+        """Harvests and returns the energy from a cell."""
+        energy = self.food_grid[coords]
+        self.food_grid[coords] = post_harvest
+        return energy
+
     # TODO: figure out the coord problems with testing grids with where()
     def on_end_round(self, recovery_rate=1):
         # allow energy cells to recover slowly
@@ -142,7 +148,7 @@ class BasicAgent(object):
                 d = (direction + i) % 8
                 return (y + Y_OFFSETS[d], x + X_OFFSETS[d])
 
-        # HACK: final option is have agent not move/wait for energy respawn
+        # HACK: as final option, have agent not move/wait for energy respawn
         return self.coords
 
 
@@ -181,22 +187,19 @@ class Simulation(object):
 
             #if not found:
 
-            adj_crd = a.next_move(view)
+            next_coord = a.next_move(view)
 
-            if adj_crd == a.coords:
-                # agent is stuck/waiting
-                assert self.world.food_grid[adj_crd] == 0
+            if next_coord == a.coords:  # agent is stuck/waiting
+                assert self.world.food_grid[next_coord] == 0
 
-            a.coords = adj_crd
-
-            # TODO: replace with harvest()
-            a.energy += self.world.food_grid[adj_crd]
-            self.world.food_grid[adj_crd] = -1  # remove food from cell
-
+            a.coords = next_coord
+            a.energy += self.world.harvest(next_coord)
             a.on_end_turn()
+
             if a.is_dead():
-                # TODO: test saved view doesn't change over time
-                a.last_view = self.world.food_grid.view(*a.coords, size=1)
+                # cache area where the agent died for reference
+                data = copy.copy(self.world.food_grid.view(*a.coords, size=1))
+                a.last_view = data
 
         if self.live_agents:
             self.collect_stats()
