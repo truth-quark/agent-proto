@@ -12,7 +12,7 @@ X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
 
 # Start with simple rules
 # agents move one cell at a time
-# do one activity per turn (move, get food)
+# do one activity per turn (move, get food)?
 # do a fixed number of turns first, then add die_after attribute
 
 # end sim when all agents are dead
@@ -138,11 +138,12 @@ class Simulation(object):
 
                 a.on_turn_end()
                 if a.is_dead():
+                    # TODO: test saved view doesn't change over time
                     a.last_view = self.world.food_grid.view(*a.coords, size=1)
 
             if self.live_agents:
                 self.collect_stats()
-                # TODO: self.world.on_end_round()
+                self.world.on_end_round()
             else:
                 break
         self.round = n
