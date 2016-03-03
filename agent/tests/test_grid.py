@@ -9,6 +9,11 @@ import components
 from components import NODATA
 
 
+def test_adjacent_coords():
+    exp = [(0,1), (0,2), (1,2), (2,2), (2,1), (2,0), (1,0), (0,0)]
+    result = components.adjacent_coords((1,1))
+
+
 def generate_test_grid():
     fd = StringIO.StringIO('123\n789\n234\n890\n')
     return components.Grid.from_file(fd)

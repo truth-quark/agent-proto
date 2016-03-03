@@ -5,6 +5,16 @@ import numpy as np
 DEFAULT_BORDER = 1
 NODATA = -128
 
+Y_OFFSETS = (-1, -1, 0, 1, 1, 1, 0, -1)
+X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
+
+
+def adjacent_coords(coord):
+    y, x = coord
+    for yoff, xoff in zip(Y_OFFSETS, X_OFFSETS):
+        adj_coord = (y + yoff, x + xoff)
+        yield adj_coord
+
 
 class Grid(object):
     """Generic grid for storing data in 2D space."""
