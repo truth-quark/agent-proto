@@ -15,7 +15,9 @@ X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
 # do one activity per turn (move, get food)?
 # do a fixed number of turns first, then add die_after attribute
 
-# end sim when all agents are dead
+# viewing options:
+# lifetime stats for each agent, as a graph (graph harvests and consumption)
+# output images of the grid + agents on it, showing changes over time
 
 
 class BasicWorld(object):
@@ -45,12 +47,12 @@ class BasicAgent(object):
         self.id = _id
         self.vision = vision
         self.metabolism = metabolism
-        self.init_metabolism = metabolism
+        self.init_metabolism = metabolism  # historical record
         self._energy = energy
-        self.init_energy = energy
+        self.init_energy = energy  # historical record
         self._coords = coords
 
-        self.move_history = []
+        self.move_history = [coords] if coords else []
         self.harvest_history = []
         self.last_view = None  # snapshot of area at final turn
 
@@ -83,11 +85,12 @@ class BasicAgent(object):
         return self._coords
 
     @coords.setter
-    def coords(self, _coords):
+    def coords(self, coords):
         if self._coords:
-            self.move_history.append(self._coords)
-        self._coords = _coords
+            self.move_history.append(coords)
+        self._coords = coords
 
+    # TODO: refactor to on_end_turn()
     def on_turn_end(self):
         self._energy -= self.metabolism
 
