@@ -35,6 +35,15 @@ def test_simulation():
     # TODO: add more testing ...
 
 
+def test_adjacent_agents():
+    sim = generate_basic_simulation()
+    agent2 = BasicAgent(_id=1, vision=1, metabolism=2, energy=33, coords=(3,1))
+    agent3 = BasicAgent(_id=2, vision=1, metabolism=2, energy=44, coords=(1,1))
+    sim.agents += [agent2, agent3]
+    res = sim.adjacent_agents(sim.agents[0])
+    assert res == {5:agent2, 7: agent3}
+
+
 DATA = '''21000
 11000
 00000

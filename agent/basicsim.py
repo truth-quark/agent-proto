@@ -3,12 +3,8 @@ import random
 
 import numpy as np
 
-from components import Grid, NODATA
-
-
-Y_OFFSETS = (-1, -1, 0, 1, 1, 1, 0, -1)
-X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
-
+from components import Grid, adjacent_coords
+from components import NODATA, Y_OFFSETS, X_OFFSETS
 
 # Start with simple rules
 # agents move one cell at a time
@@ -18,6 +14,7 @@ X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
 # Other features:
 # energy cells that can become damaged/not recover - force agents to explore
 # need for travel to water
+# have agents interact (trade energy for water etc?)
 
 # viewing options:
 # lifetime stats for each agent, as a graph (graph harvests and consumption)
@@ -46,8 +43,6 @@ class BasicWorld(object):
             r0[changed] += recovery_rate
 
 
-# FIXME: move behaviour/decision making into agent class
-# allows different types of agents to be used/make different decisions
 class BasicAgent(object):
     """Simple agent with basic stats."""
 
@@ -107,27 +102,32 @@ class BasicAgent(object):
         """Callback to handle changes to the agent at the end of each turn."""
         self._energy -= self.metabolism
 
-    def next_move(self, view):
+    def next_move(self, view, adj_agents=None):
         """Simulates simple searching behaviour by an agent, simply looking for
         the most productive cell in the adjacent cells."""
         best = NODATA
         best_coord = None
         y, x = self.coords
-        energy = [None] * 8  # cache energy data for possible later search
 
-        for i, (yoff, xoff) in enumerate(zip(Y_OFFSETS, X_OFFSETS)):
-            adj_coord = (1+yoff, 1+xoff)  # treat current coords as 1,1
+        # TODO: use dict?
+        tmp_energy = [None] * 8  # cache energy data for possible later search
+
+        # scan around the *local* view looking for energy and agents
+        for i, adj_coord in enumerate(adjacent_coords((1,1))):
+            if adj_agents:
+                if adj_agents.get(i):
+                    continue  # skip cells occupied by other agents
+
             adj_energy = view[adj_coord]
-
             if adj_energy > -1:
-                energy[i] = adj_energy
+                tmp_energy[i] = adj_energy
 
             if adj_energy and adj_energy > best:
-                best_coord = (y + yoff, x + xoff)  # NB: world grid coords
+                best_coord = (y + Y_OFFSETS[i], x + X_OFFSETS[i])  # NB: world grid coords
                 best = adj_energy
 
         if not best_coord:
-            best_coord = self._search_direction(energy)
+            best_coord = self._search_direction(tmp_energy)
 
         return best_coord
 
@@ -137,7 +137,6 @@ class BasicAgent(object):
         # TODO: better deterministic search algorithm?
 
         direction = self.id  # FIXME: relies on id being numeric
-
         if direction:  # reorder array to start with ID based direction
             adjacent = adjacent[direction:] + adjacent[:direction]
 
@@ -177,17 +176,8 @@ class Simulation(object):
         """Run a single round or timestep of the simulation."""
         for a in self.live_agents:
             view = self.world.food_grid.view(*a.coords, size=1)
-            # TODO: remove other agents occupied cells here
-            # ignore adjacent cells occupyied by other agents
-            #found = False
-            #for a in self.agents:
-                #if a.coords == adj:
-                    #found = True
-                    #break
-
-            #if not found:
-
-            next_coord = a.next_move(view)
+            adj_agents = self.adjacent_agents(a)
+            next_coord = a.next_move(view, adj_agents)
 
             if next_coord == a.coords:  # agent is stuck/waiting
                 assert self.world.food_grid[next_coord] == 0
@@ -207,12 +197,22 @@ class Simulation(object):
 
         return len(self.live_agents)
 
+    def adjacent_agents(self, agent):
+        """Search around the given agent to see if any are adjacent."""
+        # TODO: could optimise/remove agents from search that are further out
+        adj_agents = {}
+        for i, adj_coord in enumerate(adjacent_coords(agent.coords)):
+            for a in self.live_agents:
+                if a.coords == adj_coord:
+                    adj_agents[i] = a
+
+        return adj_agents
+
     @property
     def live_agents(self):
         return [a for a in self.agents if a.is_alive()]
 
     def collect_stats(self):
-        # collect basic stats at the end of each round
         n_agents = len(self.live_agents)
 
         if not n_agents:

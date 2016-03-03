@@ -56,6 +56,7 @@ def test_energy_history():
 
 
 class MoveTests(unittest.TestCase):
+    """Checks the search behaviour algorithms of the BasicAgent objs."""
 
     def setUp(self):
         self.agent = make_basic_agent()
@@ -71,6 +72,12 @@ class MoveTests(unittest.TestCase):
 
         self.agent.id = 5
         assert self.agent.next_move(view) == (3,2)
+
+    def test_next_move_with_agents(self):
+        # get a view and block off cells with agents / special value
+        adj_agents = {4:object()}
+        view = np.array([[0, 0, 0], [-1, -1, -1], [2, 3, 0]])
+        assert self.agent.next_move(view, adj_agents) == (3,2)
 
     def test_search_direction(self):
         adjacent = [-1, -1, -1, -1, 0, -1, -1, -1]
