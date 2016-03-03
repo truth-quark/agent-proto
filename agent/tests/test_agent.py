@@ -80,7 +80,7 @@ class MoveTests(unittest.TestCase):
         assert self.agent.next_move(view, adj_agents) == (3,2)
 
     def test_search_direction(self):
-        adjacent = [-1, -1, -1, -1, 0, -1, -1, -1]
+        adjacent = {4:0}
 
         for i in [2,3,4,5,6,7,0,1]:
             self.agent.id = i

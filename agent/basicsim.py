@@ -108,9 +108,7 @@ class BasicAgent(object):
         best = NODATA
         best_coord = None
         y, x = self.coords
-
-        # TODO: use dict?
-        tmp_energy = [None] * 8  # cache energy data for possible later search
+        tmp_energy = {}  # cache energy data for possible later search
 
         # scan around the *local* view looking for energy and agents
         for i, adj_coord in enumerate(adjacent_coords((1,1))):
@@ -131,21 +129,18 @@ class BasicAgent(object):
 
         return best_coord
 
-    def _search_direction(self, adjacent):
-        # no energy nearby, start a search off in first possible direction
+    def _search_direction(self, adj_energy):
+        # no energy cells nearby, so move in first possible direction
         # won't work on borders as it will cause an agent to run around edges
         # TODO: better deterministic search algorithm?
-
         direction = self.id  # FIXME: relies on id being numeric
-        if direction:  # reorder array to start with ID based direction
-            adjacent = adjacent[direction:] + adjacent[:direction]
-
-        # scan in all directions & pick first open direction from initial seed
-        for i, energy in enumerate(adjacent):
-            if energy == 0:
+        for _ in range(8):  # scan all directions & pick 1st direction from initial seed
+            direction %= 8
+            if adj_energy.get(direction) == 0:
                 y, x = self.coords
-                d = (direction + i) % 8
-                return (y + Y_OFFSETS[d], x + X_OFFSETS[d])
+                return (y + Y_OFFSETS[direction], x + X_OFFSETS[direction])
+            else:
+                direction += 1
 
         # HACK: as final option, have agent not move/wait for energy respawn
         return self.coords
