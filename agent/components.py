@@ -7,6 +7,7 @@ NODATA = -128
 
 
 class Grid(object):
+    """Generic grid for storing data in 2D space."""
 
     def __init__(self, nrows, ncols, border=DEFAULT_BORDER):
         if border !=1:
