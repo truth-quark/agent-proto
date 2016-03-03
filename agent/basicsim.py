@@ -10,9 +10,7 @@ Y_OFFSETS = (-1, -1, 0, 1, 1, 1, 0, -1)
 X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
 
 
-# TODO: create world and populate with agents
-
-# start with simple rules
+# Start with simple rules
 # agents move one cell at a time
 # do one activity per turn (move, get food)
 # do a fixed number of turns first, then add die_after attribute
@@ -25,12 +23,15 @@ class BasicWorld(object):
     def __init__(self, food_grid):
         # grids for current food state & original state (for energy respawn)
         self.food_grid = food_grid
-        self.orig_food_grid = copy.copy(food_grid)
+        self.orig_food_grid = copy.deepcopy(food_grid)
 
-    def on_end_round(self):
-        # allow the energy source to recover slowly
-        changed = np.where(self.food_grid != self.orig_food_grid)
-        self.food_grid[changed] += 1  # TODO: modify recovery rate?
+    # TODO: figure out the coord problems with testing grids with where()
+    def on_end_round(self, recovery_rate=1):
+        # allow energy cells to recover slowly
+        # TODO: row by row until the grid based where() bug is solved
+        for r0, r1 in zip(self.food_grid, self.orig_food_grid):
+            changed = np.where(r0 != r1)
+            r0[changed] += recovery_rate
 
 
 class BasicAgent(object):
