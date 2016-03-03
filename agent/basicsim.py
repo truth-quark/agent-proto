@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from components import Grid
+from components import Grid, NODATA
 
 
 Y_OFFSETS = (-1, -1, 0, 1, 1, 1, 0, -1)
@@ -101,6 +101,50 @@ class BasicAgent(object):
         """Callback to handle changes to the agent at the end of each turn."""
         self._energy -= self.metabolism
 
+    def next_move(self, view):
+        """Simulates simple searching behaviour by an agent, simply looking for
+        the most productive cell in the adjacent cells."""
+        best = NODATA
+        best_coord = None
+        y, x = self.coords
+        energy = [None] * 8  # cache energy data for possible later search
+
+        for i, (yoff, xoff) in enumerate(zip(Y_OFFSETS, X_OFFSETS)):
+            adj_coord = (1+yoff, 1+xoff)  # treat current coords as 1,1
+            adj_energy = view[adj_coord]
+
+            if adj_energy > -1:
+                energy[i] = adj_energy
+
+            if adj_energy and adj_energy > best:
+                best_coord = (y + yoff, x + xoff)  # NB: world grid coords
+                best = adj_energy
+
+        if not best_coord:
+            best_coord = self._search_direction(energy)
+
+        return best_coord
+
+    def _search_direction(self, adjacent):
+        # no energy nearby, start a search off in first possible direction
+        # won't work on borders as it will cause an agent to run around edges
+        # TODO: better deterministic search algorithm?
+
+        direction = self.id  # FIXME: relies on id being numeric
+
+        if direction:  # reorder array to start with ID based direction
+            adjacent = adjacent[direction:] + adjacent[:direction]
+
+        # scan in all directions & pick first open direction from initial seed
+        for i, energy in enumerate(adjacent):
+            if energy == 0:
+                y, x = self.coords
+                d = (direction + i) % 8
+                return (y + Y_OFFSETS[d], x + X_OFFSETS[d])
+
+        # HACK: final option is have agent not move/wait for energy respawn
+        return self.coords
+
 
 class Simulation(object):
 
@@ -127,34 +171,27 @@ class Simulation(object):
         """Run a single round or timestep of the simulation."""
         for a in self.live_agents:
             view = self.world.food_grid.view(*a.coords, size=1)
-            adj_crd = self._best_adj_cell(a.coords, view)
+            # TODO: remove other agents occupied cells here
+            # ignore adjacent cells occupyied by other agents
+            #found = False
+            #for a in self.agents:
+                #if a.coords == adj:
+                    #found = True
+                    #break
 
-            # TODO: following blocks are behaviour/move to agent class
-            if adj_crd:
-                # TODO: shove into the agent class?
-                a.coords = adj_crd
-                a.energy += self.world.food_grid[adj_crd]
-                self.world.food_grid[adj_crd] = -1  # remove food from cell
-            else:
-                # TODO: better deterministic search algorithm?
-                init_dir = a.id  # FIXME: relies on id being numeric
-                count = 0
+            #if not found:
 
-                while True:
-                    init_dir %= 8
-                    tmp = (a.coords[0] + Y_OFFSETS[init_dir],
-                           a.coords[1] + X_OFFSETS[init_dir])
+            adj_crd = a.next_move(view)
 
-                    if self.world.food_grid[tmp] >= 0:  # avoid NODATA
-                        a.coords = tmp
-                        a.energy += 0  # HACK: records no energy gained during turn
-                        break
-                    else:
-                        init_dir += 1
+            if adj_crd == a.coords:
+                # agent is stuck/waiting
+                assert self.world.food_grid[adj_crd] == 0
 
-                    count += 1
-                    if count == 8:
-                        break  # HACK: get the agent to wait for regrowth
+            a.coords = adj_crd
+
+            # TODO: replace with harvest()
+            a.energy += self.world.food_grid[adj_crd]
+            self.world.food_grid[adj_crd] = -1  # remove food from cell
 
             a.on_end_turn()
             if a.is_dead():
@@ -214,29 +251,6 @@ class Simulation(object):
         for a in dead_agents:
             sub_report(a)
             print 'Final view:\n', a.last_view
-
-    def _best_adj_cell(self, coords, view):
-        best = -10  # TODO: to NODATA?
-        best_crd = None
-
-        for i, (yoff, xoff) in enumerate(zip(Y_OFFSETS, X_OFFSETS)):
-            adj = (coords[0] + yoff, coords[1] + xoff)
-
-            # ignore adjacent cells occupyied by other agents
-            found = False
-            for a in self.agents:
-                if a.coords == adj:
-                    found = True
-                    break
-
-            if not found:
-                adj_energy = self.world.food_grid[adj]
-
-                if adj_energy > 0 and adj_energy > best:
-                    best_crd = adj
-                    best = adj_energy
-
-        return best_crd
 
 
 def generate_agents_deterministic():

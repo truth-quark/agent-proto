@@ -1,10 +1,11 @@
 import unittest
 
+import numpy as np
 import basicsim
 
-# basicsim tests
+
 def make_basic_agent():
-    return basicsim.BasicAgent(_id='Test Agent', vision=2, metabolism=1, energy=23)
+    return basicsim.BasicAgent(_id=0, vision=2, metabolism=1, energy=23)
 
 
 def test_living():
@@ -52,3 +53,28 @@ def test_energy_history():
     # NB: on_end_turn() shouldn't be recorded as an energy change
     agent.on_end_turn()
     assert agent.harvest_history == [2, -4]
+
+
+class MoveTests(unittest.TestCase):
+
+    def setUp(self):
+        self.agent = make_basic_agent()
+        self.agent.coords = (2,3)
+
+    def test_next_move(self):
+        view = np.array([[1,2,3], [0,0,0], [0,0,0]])
+        assert self.agent.next_move(view) == (1,4)  # cell with 3 in it
+
+    def test_next_move_nothing(self):
+        view = np.array([[0,0,0], [0,0,0], [0,0,0]])
+        assert self.agent.next_move(view) == (1,3)  # for id=0
+
+        self.agent.id = 5
+        assert self.agent.next_move(view) == (3,2)
+
+    def test_search_direction(self):
+        adjacent = [-1, -1, -1, -1, 0, -1, -1, -1]
+
+        for i in [2,3,4,5,6,7,0,1]:
+            self.agent.id = i
+            assert self.agent._search_direction(adjacent) == (3,3)
