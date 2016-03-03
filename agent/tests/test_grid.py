@@ -1,5 +1,6 @@
 import unittest
 import StringIO
+import copy
 
 import numpy as np
 import numpy.testing as npt
@@ -63,4 +64,11 @@ def test_grid_iter():
 
 
 def test_copy_grid():
-    raise NotImplementedError
+    # safety check: ensure underlying grid is copied to new array
+    grid = generate_test_grid()
+    cgrid = copy.copy(grid)
+    npt.assert_equal(grid._grid, cgrid._grid)
+
+    # ensure separate data grids underneath
+    cgrid[(0,0)] += 15
+    npt.assert_equal(grid._grid, cgrid._grid) is False
