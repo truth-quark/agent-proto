@@ -16,6 +16,12 @@ def test_harvest():
     world = generate_basicworld()
     assert world.harvest(coords) == 2
     assert world.food_grid[coords] == -1
+    world.on_end_round()
+    assert world.food_grid[coords] == 0
+    world.on_end_round()
+    assert world.food_grid[coords] == 1
+    world.on_end_round()
+    assert world.food_grid[coords] == 2
 
 
 def test_basicworld_respawn():
