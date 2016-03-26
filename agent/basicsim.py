@@ -1,5 +1,6 @@
 import copy
 import random
+from pprint import pprint
 
 import numpy as np
 
@@ -18,8 +19,12 @@ from components import NODATA, Y_OFFSETS, X_OFFSETS
 
 # viewing options:
 # lifetime stats for each agent, as a graph (graph harvests and consumption)
-# output images of the grid + agents on it, showing changes over time
 
+
+# TODO: refactor out a base simulation class
+# TODO: make simulations with topo and water
+# TODO: allow agents to go uphill to get a view, then search for food
+#       (ie have a memory for locations of interest)
 
 class BasicWorld(object):
 
@@ -31,6 +36,10 @@ class BasicWorld(object):
     def harvest(self, coords, post_harvest=-1):
         """Harvests and returns the energy from a cell."""
         energy = self.food_grid[coords]
+
+        #if energy == 0:
+        #    raise NotImplementedError('skip the zero area')
+
         self.food_grid[coords] = post_harvest
         return energy
 
@@ -146,6 +155,8 @@ class BasicAgent(object):
         return self.coords
 
 
+# TODO: supply dict to allow runtime settings to be tweaked
+# eg. post harvest cell recovery time
 class Simulation(object):
 
     def __init__(self, food_grid, agents):
@@ -178,11 +189,14 @@ class Simulation(object):
                 assert self.world.food_grid[next_coord] == 0
 
             a.coords = next_coord
+
+            # TODO: fix logic for energy = 0
+            # TODO: add recovery time setting
             a.energy += self.world.harvest(next_coord)
             a.on_end_turn()
 
             if a.is_dead():
-                # cache area where the agent died for reference
+                # cache view where the agent died for reference
                 data = copy.copy(self.world.food_grid.view(*a.coords, size=1))
                 a.last_view = data
 
@@ -213,6 +227,7 @@ class Simulation(object):
 
     @property
     def live_agents(self):
+        # TODO: could cache previous live agents
         return [a for a in self.agents if a.is_alive()]
 
     def collect_stats(self):
@@ -227,8 +242,9 @@ class Simulation(object):
         self.average_metabolism.append(round(avg_metabolism, 2))
         self.num_dead_agents.append(sum(a.is_dead() for a in self.agents))
 
+    # TODO: dump report to a text file
     def report(self):
-        from pprint import pprint
+        """Prints rough report of simulation details."""
 
         def sub_report(_agent):
             print _agent
