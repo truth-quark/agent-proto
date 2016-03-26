@@ -117,42 +117,43 @@ class BasicAgent(object):
         best = NODATA
         best_coord = None
         y, x = self.coords
-        tmp_energy = {}  # cache energy data for possible later search
+        adj_energy = {}  # cache energy data for possible later search
 
         # scan around the *local* view looking for energy and agents
-        for i, adj_coord in enumerate(adjacent_coords((1,1))):
+        for d, adj_coord in enumerate(adjacent_coords((1,1))):
             if adj_agents:
-                if adj_agents.get(i):
+                if adj_agents.get(d):
                     continue  # skip cells occupied by other agents
 
-            adj_energy = view[adj_coord]
-            if adj_energy > -1:
-                tmp_energy[i] = adj_energy
+            energy = view[adj_coord]
+            if energy > 0:
+                adj_energy[d] = energy
 
-            if adj_energy and adj_energy > best:
-                best_coord = (y + Y_OFFSETS[i], x + X_OFFSETS[i])  # NB: world grid coords
-                best = adj_energy
+                if energy > best:
+                    best_coord = (y + Y_OFFSETS[d], x + X_OFFSETS[d])  # NB: world grid coords
+                    best = energy
+            elif energy == NODATA:
+                # cache NODATA cells to prevent illegal agent moves
+                adj_energy[d] = NODATA
 
-        if not best_coord:
-            best_coord = self._search_direction(tmp_energy)
-
-        return best_coord
+        return best_coord if best_coord else self._search_direction(adj_energy)
 
     def _search_direction(self, adj_energy):
-        # no energy cells nearby, so move in first possible direction
-        # won't work on borders as it will cause an agent to run around edges
+        # no energy nearby, so move in first possible direction using id as seed
+        # won't always work well as some agents will run around borders
         # TODO: better deterministic search algorithm?
         direction = self.id  # FIXME: relies on id being numeric
         for _ in range(8):  # scan all directions & pick 1st direction from initial seed
             direction %= 8
-            if adj_energy.get(direction) == 0:
+            if adj_energy.get(direction) != NODATA:
                 y, x = self.coords
                 return (y + Y_OFFSETS[direction], x + X_OFFSETS[direction])
             else:
                 direction += 1
 
-        # HACK: as final option, have agent not move/wait for energy respawn
-        return self.coords
+        # HACK: as final option, have agent not move/wait for energy respawn?
+        # return self.coords
+        raise NotImplementedError('Add better search algorithm')
 
 
 # TODO: supply dict to allow runtime settings to be tweaked

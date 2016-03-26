@@ -1,7 +1,10 @@
 import unittest
 
 import numpy as np
+
 import basicsim
+import components
+from components import NODATA
 
 
 def make_basic_agent():
@@ -80,11 +83,15 @@ class MoveTests(unittest.TestCase):
         assert self.agent.next_move(view, adj_agents) == (3,2)
 
     def test_search_direction(self):
-        adjacent = {4:0}
-
-        for i in [2,3,4,5,6,7,0,1]:
+        # agent's search direction should be based on modulo of id 0=N, 2=E
+        for i, crd in enumerate(components.adjacent_coords(self.agent.coords)):
             self.agent.id = i
-            assert self.agent._search_direction(adjacent) == (3,3)
+            assert self.agent._search_direction(adj_energy={}) == crd
+
+    def test_search_direction_nodata(self):
+        self.agent.id = 5  # default is SW direction of travel
+        adj_energy = {5:NODATA, 6:NODATA}
+        assert self.agent._search_direction(adj_energy) == (1,2)
 
     def test_search_direction_multiple_turns(self):
         # check if some agents get stuck/go back & forth uselessly between 2 cells
