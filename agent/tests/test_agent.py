@@ -29,6 +29,14 @@ def test_on_end_turn():
     assert agent.energy == energy - metabolism
 
 
+def test_harvest_on_zero_cell():
+    raise NotImplementedError
+
+
+def test_harvest_on_negative_cell():
+    raise NotImplementedError
+
+
 def test_move_history():
     # agent should record each cell visited when visited
     s0, s1, s2 = [(1,i+1) for i in range(3)]
@@ -85,3 +93,19 @@ class MoveTests(unittest.TestCase):
         for i in [2,3,4,5,6,7,0,1]:
             self.agent.id = i
             assert self.agent._search_direction(adjacent) == (3,3)
+
+    def test_search_direction_multiple_turns(self):
+        # check if some agents get stuck/go back & forth uselessly between 2 cells
+        self.agent.id = 3  # force SE travel
+        start = (0,0)
+        self.agent.coords = start
+        view = np.zeros((3,3), dtype=np.int8)
+
+        for i in range(5):
+            exp = tuple(i + n + 1 for n in start)
+            act = self.agent.next_move(view, {})
+            assert act == exp
+            self.agent.coords = exp  # move the agent
+
+        # ensure agent hasn't re-visited a prev square
+        assert len(set(self.agent.move_history)) == 6  # start + 5 moves
