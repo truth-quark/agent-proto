@@ -241,36 +241,38 @@ class Simulation(object):
         self.num_dead_agents.append(sum(a.is_dead() for a in self.agents))
 
     # TODO: dump report to a text file
-    def report(self):
+    def report(self, out):
         """Prints rough report of simulation details."""
 
         def sub_report(_agent):
-            print _agent
-            print 'Energy harvests:', _agent.harvest_history
-            print 'Moves:', _agent.move_history
-            print
+            print >> out, _agent
+            print >> out, 'Energy harvests:', _agent.harvest_history
+            print >> out, 'Moves:', _agent.move_history
+            print >> out
 
-        print 'Per turn data:'
-        print '--------------'
-        print 'Got to round:   ', self.final_round
-        print 'Num dead agents:', self.num_dead_agents
-        print 'Average energy: ', self.average_energy
-        print 'Average metabolism: ', self.average_metabolism
+        print >> out, 'Per turn data:'
+        print >> out, '--------------'
+        print >> out, 'Got to round:   ', self.final_round
+        print >> out, 'Num dead agents:', self.num_dead_agents
+        print >> out, 'Average energy: ', self.average_energy
+        print >> out, 'Average metabolism: ', self.average_metabolism
 
         live_agents = [a for a in self.agents if a.is_alive()]
         live_agents.sort(key=lambda x: x.energy, reverse=True)
 
-        print '\nLive Agents - Stats'
-        print '---------------------'
+        print >> out, '\nLive Agents - Stats'
+        print >> out, '---------------------'
         for a in live_agents:
             sub_report(a)
+            print >> out, '--------------------'
 
-        print '\nDead Agents - Stats'
-        print '---------------------'
+        print >> out, '\nDead Agents - Stats'
+        print >> out, '---------------------'
         dead_agents = [a for a in self.agents if a.is_dead()]
         for a in dead_agents:
             sub_report(a)
-            print 'Final view:\n', a.last_view
+            print >> out, 'Final view:\n', a.last_view
+            print >> out, '--------------------'
 
 
 def generate_agents_deterministic():
@@ -292,6 +294,15 @@ def generate_agents_deterministic():
                 enumerate(zip(vision, metabolism, energy, coords))]
 
 
+def default_filename():
+    import os
+    from datetime import datetime
+    n = datetime.now()
+    attrs = [getattr(n, a) for a in ('year', 'month', 'day', 'hour', 'minute')]
+    name = 'simrun_{}_{:02d}_{:02d}_{:02d}_{:02d}.txt'.format(*attrs)
+    return os.path.join(os.environ['HOME'], name)
+
+
 if __name__ == '__main__':
     food_grid_path = '../data/basic_grid.txt'
 
@@ -300,4 +311,8 @@ if __name__ == '__main__':
         agents = generate_agents_deterministic()
         simulation = Simulation(food_grid, agents)
         simulation.run(200)
-        simulation.report()
+
+        path = default_filename()
+        with open(path, 'w') as f:
+            simulation.report(f)
+            print path, 'saved'
