@@ -1,9 +1,11 @@
+import os
 import copy
 import random
 from pprint import pprint
 
 import numpy as np
 
+import viz
 from components import Grid, adjacent_coords
 from components import NODATA, Y_OFFSETS, X_OFFSETS
 
@@ -160,15 +162,22 @@ class BasicAgent(object):
 # eg. post harvest cell recovery time
 class Simulation(object):
 
-    def __init__(self, food_grid, agents):
+    def __init__(self, food_grid, agents, config=None):
         self.world = BasicWorld(food_grid)
         self.agents = agents
+        self.config = config if config else {}
 
         # stats
         self.final_round = None
         self.average_energy = []
         self.average_metabolism = []
         self.num_dead_agents = []
+
+        # viz coroutine
+        _dir = self.config.get('VIZ_OUTPUT_DIR')
+        if _dir:
+            self.take_snapshot = viz.snapshot_image(self.world.food_grid, _dir, scale=10)
+            self.take_snapshot.next()
 
     def run(self, num_rounds):
         for n in range(num_rounds):
@@ -181,7 +190,9 @@ class Simulation(object):
 
     def do_round(self):
         """Run a single round or timestep of the simulation."""
-        for a in self.live_agents:
+        living_agents = self.live_agents
+
+        for a in living_agents:
             view = self.world.food_grid.view(*a.coords, size=1)
             adj_agents = self.adjacent_agents(a)
             next_coord = a.next_move(view, adj_agents)
@@ -197,6 +208,11 @@ class Simulation(object):
                 # cache view where the agent died for reference
                 data = copy.copy(self.world.food_grid.view(*a.coords, size=1))
                 a.last_view = data
+
+        if hasattr(self, 'take_snapshot'):
+            # snapshots here show agents that just died
+            # TODO: sometimes can't see fully respawned cells as agents move onto them
+            self.take_snapshot.send(living_agents)
 
         if self.live_agents:
             self.collect_stats()
@@ -294,25 +310,35 @@ def generate_agents_deterministic():
                 enumerate(zip(vision, metabolism, energy, coords))]
 
 
-def default_filename():
-    import os
+def default_filename(_dir):
     from datetime import datetime
     n = datetime.now()
     attrs = [getattr(n, a) for a in ('year', 'month', 'day', 'hour', 'minute')]
     name = 'simrun_{}_{:02d}_{:02d}_{:02d}_{:02d}.txt'.format(*attrs)
-    return os.path.join(os.environ['HOME'], name)
+    return os.path.join(_dir, name)
+
+
+def get_config(path):
+    # TODO: import ConfigParser
+    with open(path) as fd:
+        lines = fd.readlines()
+        config = dict(line.strip().split('=') for line in lines if '=' in line)
+    return config
 
 
 if __name__ == '__main__':
+    # run the default simulation
     food_grid_path = '../data/basic_grid.txt'
+    settings_path = os.path.join(os.environ['HOME'], '.agentsim.rc')
+    config = get_config(settings_path)
 
     with open(food_grid_path) as fd:
         food_grid = Grid.from_file(fd)
         agents = generate_agents_deterministic()
-        simulation = Simulation(food_grid, agents)
+        simulation = Simulation(food_grid, agents, config)
         simulation.run(200)
 
-        path = default_filename()
+        path = default_filename(config['REPORT_OUTPUT_DIR'])
         with open(path, 'w') as f:
             simulation.report(f)
             print path, 'saved'

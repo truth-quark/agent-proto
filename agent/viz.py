@@ -5,12 +5,8 @@ import Image
 import numpy as np
 
 
-# TODO: refactor into coroutine to generate images each time round data is sent
-# use it to keep file paths/numbering etc out of the simulation code
-# TODO: come up with directory/filename/auto numbering scheme
-# TODO: settings/conf file for detault save location in simulation?
-
 def snapshot_image(grid, _dir, scale=1):
+    """Coroutine to generate image snapshots of the simulation."""
     if not os.path.isdir(_dir):
         raise IOError('Need a directory: {}'.format(_dir))
 
@@ -25,6 +21,7 @@ def snapshot_image(grid, _dir, scale=1):
         return
 
 def image_dump(grid, agents, path, scale=1):
+    """"Dumps a single image of the simulation to a file."""
     raw = grid._grid[1:-1, 1:-1]  # TODO: pass in without borders?
     mono = monochrome_remap(raw, agents)
     final = upscale(mono, scale) if scale > 1 else mono
