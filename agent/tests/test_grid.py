@@ -77,3 +77,13 @@ def test_copy_grid():
     # ensure separate data grids underneath
     cgrid[(0,0)] += 15
     npt.assert_equal(grid._grid, cgrid._grid) is False
+
+
+def test_shape():
+    g = generate_test_grid()
+    assert g.shape == (4,3)
+
+
+def test_dtype():
+    g = generate_test_grid()
+    assert g.dtype == np.int8

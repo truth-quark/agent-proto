@@ -127,6 +127,14 @@ class Grid(object):
     def ncols(self):
         return self._grid.shape[1] - (2 * self._border_size)
 
+    @property
+    def shape(self):
+        return (self.nrows, self.ncols)
+
+    @property
+    def dtype(self):
+        return self._grid.dtype
+
     def view(self, y, x, size):
         """TODO: coords needs to be tuple of ints??"""
         y, x = [self._offset_coord(i) for i in (y,x)]
