@@ -1,3 +1,4 @@
+import os
 import itertools
 
 import Image
@@ -6,6 +7,23 @@ import numpy as np
 
 # TODO: refactor into coroutine to generate images each time round data is sent
 # use it to keep file paths/numbering etc out of the simulation code
+# TODO: come up with directory/filename/auto numbering scheme
+# TODO: settings/conf file for detault save location in simulation?
+
+def snapshot_image(grid, _dir, scale=1):
+    if not os.path.isdir(_dir):
+        raise IOError('Need a directory: {}'.format(_dir))
+
+    try:
+        count = 0
+        while True:
+            count += 1
+            agents = (yield) # receive data
+            path = os.path.join(_dir, '{:03d}.png'.format(count))
+            image_dump(grid, agents, path, scale)
+    except GeneratorExit:
+        return
+
 def image_dump(grid, agents, path, scale=1):
     raw = grid._grid[1:-1, 1:-1]  # TODO: pass in without borders?
     mono = monochrome_remap(raw, agents)
