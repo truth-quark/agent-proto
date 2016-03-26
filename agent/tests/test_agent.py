@@ -29,14 +29,6 @@ def test_on_end_turn():
     assert agent.energy == energy - metabolism
 
 
-def test_harvest_on_zero_cell():
-    raise NotImplementedError
-
-
-def test_harvest_on_negative_cell():
-    raise NotImplementedError
-
-
 def test_move_history():
     # agent should record each cell visited when visited
     s0, s1, s2 = [(1,i+1) for i in range(3)]

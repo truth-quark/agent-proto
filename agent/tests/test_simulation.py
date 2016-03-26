@@ -35,6 +35,13 @@ def test_simulation():
     # TODO: add more testing ...
 
 
+def test_respawn_trail():
+    # check that the respawn behind an agent moving along is correct
+    # TODO: this might be better in the world tests?
+    # TODO: check harvest is working properly? (maybe change the rate to every 2 turns?)
+    1/0
+
+
 def test_adjacent_agents():
     sim = generate_basic_simulation()
     agent2 = BasicAgent(_id=1, vision=1, metabolism=2, energy=33, coords=(3,1))
@@ -42,6 +49,28 @@ def test_adjacent_agents():
     sim.agents += [agent2, agent3]
     res = sim.adjacent_agents(sim.agents[0])
     assert res == {5:agent2, 7: agent3}
+
+
+class HarvestTests(unittest.TestCase):
+
+    def setUp(self):
+        self.sim = generate_basic_simulation()
+        self.agent = self.sim.agents[0]
+        self.agent.id = 7  # force NW travel
+
+    def test_harvest_on_zero_cell(self):
+        # agents should not harvest anything on a zero cell
+        self.sim.world.food_grid[:] = 0
+        self.sim.do_round()
+        assert self.agent.energy == 20  # only metabolism amount
+        assert self.agent.coords == (1,1)
+
+    def test_harvest_on_negative_cell(self):
+        # agents shouldn't harvest negative values from recovering energy cells
+        self.sim.world.food_grid[:] = -5
+        self.sim.do_round()
+        assert self.agent.energy == 20  # only metabolism amount
+        assert self.agent.coords == (1,1)
 
 
 DATA = '''21000

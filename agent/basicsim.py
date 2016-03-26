@@ -37,11 +37,11 @@ class BasicWorld(object):
         """Harvests and returns the energy from a cell."""
         energy = self.food_grid[coords]
 
-        #if energy == 0:
-        #    raise NotImplementedError('skip the zero area')
+        if energy > 0:
+            self.food_grid[coords] = post_harvest
+            return energy
 
-        self.food_grid[coords] = post_harvest
-        return energy
+        return 0  # harvest nothing
 
     # TODO: figure out the coord problems with testing grids with where()
     def on_end_round(self, recovery_rate=1):
@@ -189,10 +189,7 @@ class Simulation(object):
                 assert self.world.food_grid[next_coord] == 0
 
             a.coords = next_coord
-
-            # TODO: fix logic for energy = 0
-            # TODO: add recovery time setting
-            a.energy += self.world.harvest(next_coord)
+            a.energy += self.world.harvest(next_coord)  # TODO: add recovery time setting
             a.on_end_turn()
 
             if a.is_dead():
