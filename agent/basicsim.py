@@ -1,7 +1,6 @@
 import os
 import copy
 import random
-from pprint import pprint
 
 import numpy as np
 
@@ -256,7 +255,6 @@ class Simulation(object):
         self.average_metabolism.append(round(avg_metabolism, 2))
         self.num_dead_agents.append(sum(a.is_dead() for a in self.agents))
 
-    # TODO: dump report to a text file
     def report(self, out):
         """Prints rough report of simulation details."""
 
@@ -328,6 +326,7 @@ def get_config(path):
 
 if __name__ == '__main__':
     # run the default simulation
+    # TODO: cmd line option for skipping viz
     food_grid_path = '../data/basic_grid.txt'
     settings_path = os.path.join(os.environ['HOME'], '.agentsim.rc')
     config = get_config(settings_path)
