@@ -1,0 +1,54 @@
+Features to add/consider for the agent simulation
+-------------------------------------------------
+
+Code cleanup? for-else or while-else loops to clean up logic?
+
+Expand vision to allow for up to 4-6 cells of view
+Update chosen direction to be weighted based on vision (possibly use Gallant's circle code to make a direction based on weighted view 'wedge' - possibly too complicated)
+Add water to the environment (eg. small streams=1, river join cell=sum of previous)
+Add topo to the environment
+Add memory: recall up to X coords (in LRU cache) of high value cells (food, water)
+Pollution and semi permanent depletion of cells?
+Trade food & water?
+Measure which cells see the most traffic/become paths
+Measure length of life [young|    adult      | elderly]
+Add clans / family: young agents tail parents until a specific age
+
+
+Search mechanisms:
+* Add 'intelligent' search: find water by going downwards to find streams
+* Upwards to climb peaks and get a better view of surrounding area (eg. double or triple the vision when on a peak cell to locate food)
+
+
+Other simulations:
+* More detailed simulation of daily activities (leave shelter, get water, find food, mind + feed child agents, return to shelter)
+* Aboriginal hunter gatherer? Don't stockpile resources, leave some behind, try to focus on longevity of the environment
+* Seasonal changes and weather? Less growth over winter, see how that affects population. Drought: make rivers shrink
+
+
+
+
+
+Thoughts:
+---------
+
+Coordinate class for cleaner code. Could add adjacent cells as a method?
+
+class Coordinate2D(object):
+    def __init__(self, y, x):
+        # TODO: slots
+        self.y = y
+        self.x = x
+
+    def offset(self, yoff, xoff):
+        """Return (y,x) tuple coordinate of that offset"""
+        return (self.y + yoff, self.x + xoff)
+
+    def update(self, yoff, xoff):
+        """Update coordinate with an offset"""
+        self.y += yoff
+        self.x += xoff
+
+    # TODO: possible idea, call obj to return coords
+    def __call__(self):
+        return (self.y, self.x)
