@@ -26,11 +26,23 @@ Other simulations:
 * Seasonal changes and weather? Less growth over winter, see how that affects population. Drought: make rivers shrink
 
 
+Urban Microsimulation
+---------------------
+
+Possible things to track:
+* Waste (household -> recycling and to landfill. Sewerage, rainwater? How does it affect pollution elsewhere?)
+* Transport (choice options: walk, ride, drive, bus)  Relation to hills, distance, fitness
+* Water consumption
+* Energy use (Transport, in the home, in offices)
+* Map to obesity, alienation from areas, lack of transport options
+
+For the purposes of what? Measure overall effects of housing design, larger impacts from cities/dev, city design effects, energy flows, effects on people, effects on the environment → maybe try and get some kind of holistic sustainability model incorporating several different factors. Give overall rating of impacts. Problems: complex and could involve a lot of factors. Would have to combine simpler smaller models.
 
 
 
-Thoughts:
----------
+
+Other Thoughts
+--------------
 
 Coordinate class for cleaner code. Could add adjacent cells as a method?
 
