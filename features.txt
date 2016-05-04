@@ -7,7 +7,9 @@ Expand vision to allow for up to 4-6 cells of view
 Update chosen direction to be weighted based on vision (possibly use Gallant's circle code to make a direction based on weighted view 'wedge' - possibly too complicated)
 Add water to the environment (eg. small streams=1, river join cell=sum of previous)
 Add topo to the environment
-Add memory: recall up to X coords (in LRU cache) of high value cells (food, water)
+Add memory: recall up to X coords (in LRU cache) of high value cells (food, water) OR give each agent a networkx/tree structure to remember good cells/routes taken. Use that to optimise for taking a shorter path between places of interest (will be of more use when agents require different types of resources)
+
+Add in travel difficulty to cells: steeper/vegetated cells require more energy to move across
 Pollution and semi permanent depletion of cells?
 Trade food & water?
 Measure which cells see the most traffic/become paths
@@ -32,6 +34,7 @@ Urban Microsimulation
 Possible things to track:
 * Waste (household -> recycling and to landfill. Sewerage, rainwater? How does it affect pollution elsewhere?)
 * Transport (choice options: walk, ride, drive, bus)  Relation to hills, distance, fitness
+  Use networkx as part of transport systems/roads to measure/simulate congestion etc?
 * Water consumption
 * Energy use (Transport, in the home, in offices)
 * Map to obesity, alienation from areas, lack of transport options
