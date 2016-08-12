@@ -1,6 +1,7 @@
 import os
 import copy
 import random
+from datetime import datetime
 
 import numpy as np
 
@@ -121,6 +122,8 @@ class BasicAgent(object):
         adj_energy = {}  # cache energy data for possible later search
 
         # scan around the *local* view looking for energy and agents
+        # TODO: loop approach is clockwise, so biases agent search + move. Could
+        #       reorder to make search patterns different by agent
         for d, adj_coord in enumerate(adjacent_coords((1,1))):
             if adj_agents:
                 if adj_agents.get(d):
@@ -142,7 +145,8 @@ class BasicAgent(object):
     def _search_direction(self, adj_energy):
         # no energy nearby, so move in first possible direction using id as seed
         # won't always work well as some agents will run around borders
-        # TODO: better deterministic search algorithm?
+        # TODO: better deterministic search algorithm
+        # TODO: experiment with more intelligent agents (climb hill or follow river)
         direction = self.id  # FIXME: relies on id being numeric
         for _ in range(8):  # scan all directions & pick 1st direction from initial seed
             direction %= 8
@@ -173,6 +177,7 @@ class Simulation(object):
         self.num_dead_agents = []
 
         # viz coroutine
+        # TODO: coroutine decorator?
         _dir = self.config.get('VIZ_OUTPUT_DIR')
         if _dir:
             self.take_snapshot = viz.snapshot_image(self.world.food_grid, _dir, scale=10)
@@ -309,7 +314,6 @@ def generate_agents_deterministic():
 
 
 def default_filename(_dir):
-    from datetime import datetime
     n = datetime.now()
     attrs = [getattr(n, a) for a in ('year', 'month', 'day', 'hour', 'minute')]
     name = 'simrun_{}_{:02d}_{:02d}_{:02d}_{:02d}.txt'.format(*attrs)
@@ -317,7 +321,7 @@ def default_filename(_dir):
 
 
 def get_config(path):
-    # TODO: import ConfigParser
+    # TODO: use ConfigParser?
     with open(path) as fd:
         lines = fd.readlines()
         config = dict(line.strip().split('=') for line in lines if '=' in line)
