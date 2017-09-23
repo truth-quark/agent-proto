@@ -25,8 +25,10 @@ from components import NODATA, Y_OFFSETS, X_OFFSETS
 
 # TODO: refactor out a base simulation class
 # TODO: make simulations with topo and water
-# TODO: allow agents to go uphill to get a view, then search for food
-#       (ie have a memory for locations of interest)
+# TODO: allow agents to go uphill to spot food/water, then search for it
+#       (have them retain memory for N locations of interest)
+# TODO: could also have agents start/return to home base (daily simulation)
+# TODO: vision: build a 2-3 cell radius algorithm (check PCTL?)
 
 class BasicWorld(object):
 
@@ -122,8 +124,13 @@ class BasicAgent(object):
         adj_energy = {}  # cache energy data for possible later search
 
         # scan around the *local* view looking for energy and agents
-        # TODO: loop approach is clockwise, so biases agent search + move. Could
-        #       reorder to make search patterns different by agent
+        # TODO: loop approach is clockwise, which biases agent search & move to
+        #       same default every time. Can tweak/make search patterns different
+        #       by agent. ALT: add proximity/vision search to automatically go
+        #       for the weighted best looking area
+        #
+        # TODO: look at pushing decision process out to a navigation module?
+        #       Could add pluggable nav behaviour/different for each agent
         for d, adj_coord in enumerate(adjacent_coords((1,1))):
             if adj_agents:
                 if adj_agents.get(d):
@@ -222,6 +229,7 @@ class Simulation(object):
             self.collect_stats()
             self.world.on_end_round()
 
+        # TODO: can snapshot here to display respawns before next round of moves
         return len(self.live_agents)
 
     def adjacent_agents(self, agent):
