@@ -5,9 +5,9 @@ from datetime import datetime
 
 import numpy as np
 
-import viz
-from components import Grid, adjacent_coords
-from components import NODATA, Y_OFFSETS, X_OFFSETS
+from agent import viz
+from agent.components import Grid, adjacent_coords
+from agent.components import NODATA, Y_OFFSETS, X_OFFSETS
 
 # Start with simple rules
 # agents move one cell at a time

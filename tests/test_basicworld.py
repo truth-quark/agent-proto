@@ -1,8 +1,8 @@
 import unittest
-import StringIO
+from io import StringIO
 
-import basicsim
-import components
+from agent import basicsim
+from agent import components
 
 
 def generate_basicworld():

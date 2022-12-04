@@ -1,12 +1,12 @@
-import unittest
-import StringIO
 import copy
+import unittest
+from io import StringIO
 
 import numpy as np
 import numpy.testing as npt
 
-import components
-from components import NODATA
+from agent import components
+from agent.components import NODATA
 
 
 def test_adjacent_coords():

@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 
-import viz
+from agent import viz
 
 
 def test_monochrome_remap():

@@ -1,7 +1,7 @@
 import os
 import itertools
 
-import Image
+from PIL import Image
 import numpy as np
 
 

@@ -1,8 +1,8 @@
 import unittest
-import StringIO
+from io import StringIO
 
-import components
-from basicsim import BasicAgent, Simulation
+from agent import components
+from agent.basicsim import BasicAgent, Simulation
 
 
 def generate_basic_simulation():

@@ -2,9 +2,9 @@ import unittest
 
 import numpy as np
 
-import basicsim
-import components
-from components import NODATA
+from agent import basicsim
+from agent import components
+from agent.components import NODATA
 
 
 def make_basic_agent():
