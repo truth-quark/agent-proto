@@ -1,4 +1,5 @@
 import os
+import sys
 import copy
 import random
 from datetime import datetime
@@ -188,7 +189,7 @@ class Simulation(object):
         _dir = self.config.get('VIZ_OUTPUT_DIR')
         if _dir:
             self.take_snapshot = viz.snapshot_image(self.world.food_grid, _dir, scale=10)
-            self.take_snapshot.next()
+            self.take_snapshot.__next__()
 
     def run(self, num_rounds):
         for n in range(num_rounds):
@@ -340,7 +341,7 @@ def get_config(path):
 if __name__ == '__main__':
     # run the default simulation
     # TODO: cmd line option for skipping viz
-    food_grid_path = '../data/basic_grid.txt'
+    food_grid_path = sys.argv[1] or './data/basic_grid.txt'
     settings_path = os.path.join(os.environ['HOME'], '.agentsim.rc')
     config = get_config(settings_path)
 
