@@ -272,34 +272,35 @@ class Simulation(object):
         """Prints rough report of simulation details."""
 
         def sub_report(_agent):
-            print >> out, _agent
-            print >> out, 'Energy harvests:', _agent.harvest_history
-            print >> out, 'Moves:', _agent.move_history
-            print >> out
+            print(_agent, file=out)
+            print('Energy harvests:', _agent.harvest_history, file=out)
+            print('Moves:', _agent.move_history, file=out)
+            print(file=out)
 
-        print >> out, 'Per turn data:'
-        print >> out, '--------------'
-        print >> out, 'Got to round:   ', self.final_round
-        print >> out, 'Num dead agents:', self.num_dead_agents
-        print >> out, 'Average energy: ', self.average_energy
-        print >> out, 'Average metabolism: ', self.average_metabolism
+        print('Per turn data:', file=out)
+        print('--------------', file=out)
+        print('Got to round:   ', self.final_round, file=out)
+        print('Num dead agents:', self.num_dead_agents, file=out)
+        print('Average energy: ', self.average_energy, file=out)
+        print('Average metabolism: ', self.average_metabolism, file=out)
 
         live_agents = [a for a in self.agents if a.is_alive()]
         live_agents.sort(key=lambda x: x.energy, reverse=True)
 
-        print >> out, '\nLive Agents - Stats'
-        print >> out, '---------------------'
+        print('\nLive Agents - Stats', file=out)
+        print('---------------------', file=out)
         for a in live_agents:
             sub_report(a)
-            print >> out, '--------------------'
+            print('--------------------', file=out)
 
-        print >> out, '\nDead Agents - Stats'
-        print >> out, '---------------------'
+        print('\nDead Agents - Stats', file=out)
+        print('---------------------', file=out)
+
         dead_agents = [a for a in self.agents if a.is_dead()]
         for a in dead_agents:
             sub_report(a)
-            print >> out, 'Final view:\n', a.last_view
-            print >> out, '--------------------'
+            print('Final view:\n', a.last_view, file=out)
+            print('--------------------', file=out)
 
 
 def generate_agents_deterministic():
@@ -352,4 +353,4 @@ if __name__ == '__main__':
         path = default_filename(config['REPORT_OUTPUT_DIR'])
         with open(path, 'w') as f:
             simulation.report(f)
-            print path, 'saved'
+            print(path, 'saved')
