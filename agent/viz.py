@@ -50,7 +50,7 @@ def upscale(data, factor):
     ys, xs = [i*factor for i in data.shape]
     output = np.zeros((ys, xs), dtype=data.dtype)
 
-    for y, x in itertools.product(*(xrange(i) for i in data.shape)):
+    for y, x in itertools.product(*(range(i) for i in data.shape)):
         value = data[y, x]
         block = np.ones((factor, factor), dtype=data.dtype) * value
         yoff = y * factor

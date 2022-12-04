@@ -6,7 +6,7 @@ from agent import components
 
 
 def generate_basicworld():
-    fd = StringIO.StringIO('12\n00\n')
+    fd = StringIO('12\n00\n')
     food_grid = components.Grid.from_file(fd)
     return basicsim.BasicWorld(food_grid)
 

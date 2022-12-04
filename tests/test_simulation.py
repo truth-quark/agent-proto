@@ -6,7 +6,7 @@ from agent.basicsim import BasicAgent, Simulation
 
 
 def generate_basic_simulation():
-    food_grid = components.Grid.from_file(StringIO.StringIO(DATA))
+    food_grid = components.Grid.from_file(StringIO(DATA))
     agent = BasicAgent(_id=0, vision=2, metabolism=1, energy=21, coords=(2,2))
     return Simulation(food_grid, [agent])
 
@@ -39,7 +39,7 @@ def test_respawn_trail():
     # check that the respawn behind an agent moving along is correct
     # TODO: this might be better in the world tests?
     # TODO: check harvest is working properly? (maybe change the rate to every 2 turns?)
-    1/0
+    raise NotImplementedError
 
 
 def test_adjacent_agents():

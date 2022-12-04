@@ -85,7 +85,7 @@ class Grid(object):
         if hasattr(coords, '__len__'):  # TODO: test is a container
             # treat as a tuple of coordinates
             # TODO: replace isinstance
-            f = lambda(e): self._slice_offset(e) if isinstance(e, slice) else e + self._border_size
+            f = lambda e: self._slice_offset(e) if isinstance(e, slice) else e + self._border_size
             offset = tuple(f(e) for e in coords)
         elif isinstance(coords, slice):
             offset = self._slice_offset(coords)

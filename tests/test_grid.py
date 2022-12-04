@@ -15,7 +15,7 @@ def test_adjacent_coords():
 
 
 def generate_test_grid():
-    fd = StringIO.StringIO('123\n789\n234\n890\n')
+    fd = StringIO('123\n789\n234\n890\n')
     return components.Grid.from_file(fd)
 
 
