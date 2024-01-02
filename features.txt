@@ -23,9 +23,15 @@ Search mechanisms:
 
 
 Other simulations:
-* More detailed simulation of daily activities (leave shelter, get water, find food, mind + feed child agents, return to shelter)
-* Aboriginal hunter gatherer? Don't stockpile resources, leave some behind, try to focus on longevity of the environment
-* Seasonal changes and weather? Less growth over winter, see how that affects population. Drought: make rivers shrink
+* More detailed simulation of daily activities (leave shelter, get water, find food, care for & feed child agents, return to shelter)
+* Add terrain traversal algorithms for travelling from shelter out to food/water gathering areas. Use to investigate patterns other than constant circular harvesting/stasis in early variants of the simulation.
+* Simplify turns, agents have 1 action per turn? (move, harvest, trade etc)
+  - Agents will need to focus on individual objectives, rather than constant task swapping
+  - Program in Maslow's Hierarchy of needs?
+  - Try algorithm to remain closer to home base instead of a large circular search pattern. Initial version: "remember" the cell closest overall to home cell with most energy value. Examine how this affects earlier behaviour with vast swathes of harvesting.
+* Try environment layout with lots of smaller/easily depleted harvest spaces (force agents to move often)
+* Simulate Aboriginal hunter gatherers? Don't stockpile resources, leave resources behind, try to focus on longevity of the environment/recovery. Add in greedy agents, examine effects on simulation population as a whole.
+* Seasonal changes and weather? Less growth over winter, see how that affects population. Drought: make rivers grow/shrink depending on time
 
 
 Urban Microsimulation
