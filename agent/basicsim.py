@@ -213,7 +213,7 @@ class Simulation(object):
             next_coord = a.next_move(view, adj_agents)
 
             if next_coord == a.coords:  # agent is stuck/waiting
-                assert self.world.food_grid[next_coord] == 0
+                assert self.world.food_grid[next_coord] <= 0
 
             a.coords = next_coord
             a.energy += self.world.harvest(next_coord)  # TODO: add recovery time setting
