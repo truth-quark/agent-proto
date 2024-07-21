@@ -18,7 +18,7 @@ def generate_basic_simulation():
 
 def test_simulation_single_step():
     sim = generate_basic_simulation()
-    sim.do_round()
+    sim.do_step()
 
     agent = sim.live_agents[0]
     assert len(sim.live_agents) == 1
@@ -67,14 +67,14 @@ class HarvestTests(unittest.TestCase):
     def test_harvest_on_zero_cell(self):
         # agents should not harvest anything on a zero cell
         self.sim.world.food_grid[:] = 0
-        self.sim.do_round()
+        self.sim.do_step()
         assert self.agent.energy == 20  # only metabolism amount
         assert self.agent.coords == (1, 1)
 
     def test_harvest_on_negative_cell(self):
         # agents shouldn't harvest negative values from recovering energy cells
         self.sim.world.food_grid[:] = -5
-        self.sim.do_round()
+        self.sim.do_step()
         assert self.agent.energy == 20  # only metabolism amount
         assert self.agent.coords == (1, 1)
 

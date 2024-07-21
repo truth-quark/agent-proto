@@ -190,14 +190,14 @@ class Simulation:
 
     def run(self, num_rounds):
         for n in range(num_rounds):
-            if not(self.do_round()):
+            if not(self.do_step()):
                 self.final_round = n+1
                 return
 
         self.final_round = num_rounds
         return
 
-    def do_round(self):
+    def do_step(self):
         """Run a single round or timestep of the simulation."""
         living_agents = self.live_agents
 
