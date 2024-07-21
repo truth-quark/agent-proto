@@ -1,7 +1,6 @@
 import os
 import sys
 import copy
-import random
 from datetime import datetime
 
 import numpy as np
@@ -91,6 +90,10 @@ class BasicAgent(object):
 
     def is_dead(self):
         return self.energy <= 0
+
+    @property
+    def name(self):
+        return f"Agent {self.id}"
 
     @property
     def energy(self):
