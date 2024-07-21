@@ -1,7 +1,9 @@
 import os
 import sys
 import copy
+from typing import Union
 from datetime import datetime
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -61,34 +63,22 @@ class BasicWorld(object):
             r0[changed] += recovery_rate
 
 
-class BasicAgent(object):
+# TODO: record history in the workflow/separate concerns
+#       init_energy (get from setup steps?)
+#       move_history
+#       harvest_history
+
+
+@dataclass
+class Agent:
     """Simple agent with basic stats."""
 
-    # TODO: add death after x number of turns?
-    def __init__(self, _id, vision, metabolism, energy, coords=None):
-        # vision = number of cells the agent can see in all dirs
-        # metabolism = rate at which energy is used per turn
-        # energy = current stock of food
-
-        self.id = _id
-        self.vision = vision
-        self.metabolism = metabolism
-        self.init_metabolism = metabolism  # historical record
-        self._energy = energy
-        self.init_energy = energy  # historical record
-        self._coords = coords
-
-        self.move_history = [coords] if coords else []
-        self.harvest_history = []
-        self.last_view = None  # snapshot of area at final turn
-
-    def __str__(self):
-        text = 'Agent {}: vis={} metabol={} energy={} coords={}'
-        args = (self.id, self.vision, self.metabolism, self.energy, self.coords)
-        return text.format(*args)
-
-    def __repr__(self):
-        return self.__str__()
+    # TODO: add death/max # of lifecycles ?
+    id: Union[int, str]
+    vision: int
+    metabolism: int
+    energy: int = 0
+    coords: tuple = None  # TODO move coords to simulation or metadata container?
 
     def is_alive(self):
         return self.energy > 0
@@ -100,83 +90,67 @@ class BasicAgent(object):
     def name(self):
         return f"Agent {self.id}"
 
-    @property
-    def energy(self):
-        return self._energy
 
-    @energy.setter
-    def energy(self, value):
-        prev = self._energy
-        self._energy = value
-        self.harvest_history.append(value - prev)
+def on_end_turn(agent: Agent):
+    """Callback to handle changes to the agent at the end of each turn."""
+    agent.energy -= agent.metabolism
 
-    @property
-    def coords(self):
-        return self._coords
 
-    @coords.setter
-    def coords(self, coords):
-        if self._coords:
-            self.move_history.append(coords)
-        self._coords = coords
+def next_move(agent, view, adj_agents=None):
+    """Simulates simple searching behaviour by an agent, simply looking for
+    the most productive cell in the adjacent cells."""
+    best = NODATA
+    best_coord = None
+    y, x = agent.coords
+    adj_energy = {}  # cache energy data for possible later search
 
-    def on_end_turn(self):
-        """Callback to handle changes to the agent at the end of each turn."""
-        self._energy -= self.metabolism
+    # scan around the *local* view looking for energy and agents
+    # TODO: loop approach is clockwise, which biases agent search & move to
+    #       same default every time. Can tweak/make search patterns different
+    #       by agent. ALT: add proximity/vision search to automatically go
+    #       for the weighted best looking area
+    #
+    # TODO: look at pushing decision process out to a navigation module?
+    #       Could add pluggable nav behaviour/different for each agent
+    for d, adj_coord in enumerate(adjacent_coords((1, 1))):
+        if adj_agents:
+            if adj_agents.get(d):
+                continue  # skip cells occupied by other agents
 
-    def next_move(self, view, adj_agents=None):
-        """Simulates simple searching behaviour by an agent, simply looking for
-        the most productive cell in the adjacent cells."""
-        best = NODATA
-        best_coord = None
-        y, x = self.coords
-        adj_energy = {}  # cache energy data for possible later search
+        energy = view[adj_coord]
+        if energy > 0:
+            adj_energy[d] = energy
 
-        # scan around the *local* view looking for energy and agents
-        # TODO: loop approach is clockwise, which biases agent search & move to
-        #       same default every time. Can tweak/make search patterns different
-        #       by agent. ALT: add proximity/vision search to automatically go
-        #       for the weighted best looking area
-        #
-        # TODO: look at pushing decision process out to a navigation module?
-        #       Could add pluggable nav behaviour/different for each agent
-        for d, adj_coord in enumerate(adjacent_coords((1,1))):
-            if adj_agents:
-                if adj_agents.get(d):
-                    continue  # skip cells occupied by other agents
+            if energy > best:
+                best_coord = (y + Y_OFFSETS[d], x + X_OFFSETS[d])  # NB: world grid coords
+                best = energy
+        elif energy == NODATA:
+            # cache NODATA cells to prevent illegal agent moves
+            adj_energy[d] = NODATA
 
-            energy = view[adj_coord]
-            if energy > 0:
-                adj_energy[d] = energy
+    return best_coord if best_coord else _search_direction(agent, adj_energy)
 
-                if energy > best:
-                    best_coord = (y + Y_OFFSETS[d], x + X_OFFSETS[d])  # NB: world grid coords
-                    best = energy
-            elif energy == NODATA:
-                # cache NODATA cells to prevent illegal agent moves
-                adj_energy[d] = NODATA
 
-        return best_coord if best_coord else self._search_direction(adj_energy)
+def _search_direction(agent, adj_energy):
+    # no energy nearby, so move in first possible direction using id as seed
+    # won't always work well as some agents will run around borders
+    #
+    # TODO: better deterministic search algorithm
+    # TODO: experiment with more intelligent agents (climb hill or follow river)
+    # TODO: fix agents getting stuck in corners/repeating same move
+    direction = agent.id  # FIXME: relies on id being numeric
 
-    def _search_direction(self, adj_energy):
-        # no energy nearby, so move in first possible direction using id as seed
-        # won't always work well as some agents will run around borders
-        #
-        # TODO: better deterministic search algorithm
-        # TODO: experiment with more intelligent agents (climb hill or follow river)
-        # TODO: fix agents getting stuck in corners/repeating same move
-        direction = self.id  # FIXME: relies on id being numeric
-        for _ in range(8):  # scan all directions & pick 1st direction from initial seed
-            direction %= 8
-            if adj_energy.get(direction) != NODATA:
-                y, x = self.coords
-                return (y + Y_OFFSETS[direction], x + X_OFFSETS[direction])
-            else:
-                direction += 1
+    for _ in range(8):  # scan all directions & pick 1st direction from initial seed
+        direction %= 8
+        if adj_energy.get(direction) != NODATA:
+            y, x = agent.coords
+            return y + Y_OFFSETS[direction], x + X_OFFSETS[direction]
+        else:
+            direction += 1
 
-        # HACK: as final option, have agent not move/wait for energy respawn?
-        # return self.coords
-        raise NotImplementedError('Add better search algorithm')
+    # HACK: as final option, have agent not move/wait for energy respawn?
+    # return self.coords
+    raise NotImplementedError('Add better search algorithm')
 
 
 # TODO: supply dict to allow runtime settings to be tweaked
@@ -201,6 +175,9 @@ class Simulation:
             self.take_snapshot = viz.snapshot_image(self.world.food_grid, _dir, scale=10)
             self.take_snapshot.__next__()
 
+        self.move_history = {agent.id: [] for agent in agents}
+        self.last_view = {}
+
     def run(self, num_rounds):
         for n in range(num_rounds):
             if not(self.do_round()):
@@ -217,14 +194,19 @@ class Simulation:
         for a in living_agents:
             view = self.world.food_grid.view(*a.coords, size=1)  # TODO: change to vision size
             adj_agents = self.adjacent_agents(a)
-            next_coord = a.next_move(view, adj_agents)
+            next_coord = next_move(a, view, adj_agents)
 
             if next_coord == a.coords:  # agent is stuck/waiting
                 assert self.world.food_grid[next_coord] <= 0
 
+            self.move_history[a.id].append(a.coords)
+
             a.coords = next_coord
-            a.energy += self.world.harvest(next_coord)  # TODO: add recovery time setting
-            a.on_end_turn()
+
+            # TODO: only harvest if energy > 0
+            # TODO: add one action per turn logic (move OR harvest OR wait)
+            a.energy += self.world.harvest(a.coords)  # TODO: add recovery time setting
+            on_end_turn(a)  # can kill an agent
 
             if a.is_dead():
                 # cache view where the agent died for reporting
@@ -284,8 +266,12 @@ class Simulation:
         def sub_report(_agent):
             print(file=out)
             print(_agent, file=out)
-            print('Energy harvests:', _agent.harvest_history, file=out)
-            print('\nMoves:', _agent.move_history, file=out)
+
+            if hasattr(_agent, "harvest_history"):
+                print('Energy harvests:', _agent.harvest_history, file=out)
+
+            if hasattr(_agent, "move_history"):
+                print('\nMoves:', _agent.move_history, file=out)
             print(file=out)
 
         print(f'Agent Simulation: {basename}\n', file=out)
