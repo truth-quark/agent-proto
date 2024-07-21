@@ -99,9 +99,8 @@ def on_end_turn(agent: Agent):
 def next_move(agent, view, adj_agents=None):
     """Simulates simple searching behaviour by an agent, simply looking for
     the most productive cell in the adjacent cells."""
-    best = NODATA
-    best_coord = None
-    y, x = agent.coords
+    best_energy = NODATA
+    best_dir = -1
     adj_energy = {}  # cache energy data for possible later search
 
     # scan around the *local* view looking for energy and agents
@@ -121,32 +120,43 @@ def next_move(agent, view, adj_agents=None):
         if energy > 0:
             adj_energy[d] = energy
 
-            if energy > best:
-                best_coord = (y + Y_OFFSETS[d], x + X_OFFSETS[d])  # NB: world grid coords
-                best = energy
+            if energy > best_energy:
+                best_energy = energy
+                best_dir = d
+
         elif energy == NODATA:
             # cache NODATA cells to prevent illegal agent moves
             adj_energy[d] = NODATA
 
-    return best_coord if best_coord else _search_direction(agent, adj_energy)
+    if best_energy > 0:
+        d = best_dir
+    else:
+        # must be surrounded by NODATA/bounds or zero energy land
+        if not isinstance(agent.id, int):
+            raise NotImplementedError()
+
+        d = _search_direction(adj_energy, default_direction=agent.id % 8)
+
+    y, x = agent.coords
+    return y + Y_OFFSETS[d], x + X_OFFSETS[d]  # on world grid
 
 
-def _search_direction(agent, adj_energy):
+def _search_direction(adj_energy, default_direction):
     # no energy nearby, so move in first possible direction using id as seed
     # won't always work well as some agents will run around borders
     #
     # TODO: better deterministic search algorithm
     # TODO: experiment with more intelligent agents (climb hill or follow river)
     # TODO: fix agents getting stuck in corners/repeating same move
-    direction = agent.id  # FIXME: relies on id being numeric
+    assert 0 <= default_direction <= 7
+    direction = default_direction
 
     for _ in range(8):  # scan all directions & pick 1st direction from initial seed
         direction %= 8
         if adj_energy.get(direction) != NODATA:
-            y, x = agent.coords
-            return y + Y_OFFSETS[direction], x + X_OFFSETS[direction]
-        else:
-            direction += 1
+            return direction
+
+        direction += 1
 
     # HACK: as final option, have agent not move/wait for energy respawn?
     # return self.coords
