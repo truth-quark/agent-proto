@@ -30,6 +30,11 @@ from agent.components import NODATA, Y_OFFSETS, X_OFFSETS
 # TODO: could also have agents start/return to home base (daily simulation)
 # TODO: vision: build a 2-3 cell radius algorithm (check PCTL?)
 
+# TODO: with numpy 2.0
+#       find out why int + np.int resolves to an np.int (breaks the code)
+#       find/solve overflow in average energy calc (an int8 issue with np 2.0?)
+#       debug overflow in scalar subtract too
+
 class BasicWorld(object):
 
     def __init__(self, food_grid):
@@ -156,8 +161,10 @@ class BasicAgent(object):
     def _search_direction(self, adj_energy):
         # no energy nearby, so move in first possible direction using id as seed
         # won't always work well as some agents will run around borders
+        #
         # TODO: better deterministic search algorithm
         # TODO: experiment with more intelligent agents (climb hill or follow river)
+        # TODO: fix agents getting stuck in corners/repeating same move
         direction = self.id  # FIXME: relies on id being numeric
         for _ in range(8):  # scan all directions & pick 1st direction from initial seed
             direction %= 8
@@ -208,7 +215,7 @@ class Simulation(object):
         living_agents = self.live_agents
 
         for a in living_agents:
-            view = self.world.food_grid.view(*a.coords, size=1)
+            view = self.world.food_grid.view(*a.coords, size=1)  # TODO: change to vision size
             adj_agents = self.adjacent_agents(a)
             next_coord = a.next_move(view, adj_agents)
 
