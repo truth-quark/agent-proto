@@ -344,7 +344,7 @@ def get_config(path):
 if __name__ == '__main__':
     # run the default simulation
     # TODO: cmd line option for skipping viz
-    food_grid_path = sys.argv[1] or './data/basic_grid.txt'
+    food_grid_path = './data/basic_grid.txt' if len(sys.argv) == 1 else sys.argv[1]
     settings_path = os.path.join(os.environ['HOME'], '.agentsim.rc')
     config = get_config(settings_path)
 
