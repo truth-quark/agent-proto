@@ -180,8 +180,8 @@ class BasicAgent(object):
 
 
 # TODO: supply dict to allow runtime settings to be tweaked
-# eg. post harvest cell recovery time
-class Simulation(object):
+#       eg. post harvest cell recovery time
+class Simulation:
 
     def __init__(self, food_grid, agents, config=None):
         self.world = BasicWorld(food_grid)
@@ -227,9 +227,8 @@ class Simulation(object):
             a.on_end_turn()
 
             if a.is_dead():
-                # cache view where the agent died for reference
-                data = copy.copy(self.world.food_grid.view(*a.coords, size=1))
-                a.last_view = data
+                # cache view where the agent died for reporting
+                self.last_view[a.id] = copy.copy(view)
 
         if hasattr(self, 'take_snapshot'):
             # snapshots here show agents that just died
@@ -332,8 +331,7 @@ def generate_agents_deterministic():
     yc = [48, 2, 48, 24, 17, 33, 43, 8, 26, 47, 2, 18, 29, 38, 14, 31, 6, 7, 7, 1, 7, 19, 3, 25, 12]
     coords = zip(yc, xc)
 
-    return [BasicAgent(_id, v, m, e, c) for _id, (v, m, e, c) in
-            enumerate(zip(vision, metabolism, energy, coords))]
+    return [Agent(n, *args) for n, args in enumerate(zip(vision, metabolism, energy, coords))]
 
 
 def format_date(n):
