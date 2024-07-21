@@ -295,10 +295,13 @@ class Simulation:
         print('-------------------', file=out)
 
         dead_agents = [a for a in self.agents if a.is_dead()]
+
         for a in dead_agents:
             sub_report(a)
-            print(f"Died at step {len(a.move_history)}", file=out)
-            print('Final view:\n', a.last_view, file=out)
+
+            # TODO: fix move history
+            # print(f"Died at step {len(a.move_history)}", file=out)
+            # print('Final view:\n', a.last_view, file=out)
             print('--------------------', file=out)
 
 
