@@ -7,12 +7,12 @@ NODATA = -128
 
 Y_OFFSETS = (-1, -1, 0, 1, 1, 1, 0, -1)
 X_OFFSETS = (0, 1, 1, 1, 0, -1, -1, -1)
+OFFSETS = tuple(zip(Y_OFFSETS, X_OFFSETS))  # pre-calc for efficiency
 
 
 def adjacent_coords(coord):
     y, x = coord
-    for yoff, xoff in zip(Y_OFFSETS, X_OFFSETS):
-        adj_coord = (y + yoff, x + xoff)
+    for adj_coord in ((y + yoff, x + xoff) for (yoff, xoff) in OFFSETS):
         yield adj_coord
 
 
