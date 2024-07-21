@@ -198,12 +198,12 @@ class Simulation:
         return
 
     def do_step(self):
-        """Run a single round or timestep of the simulation."""
-        living_agents = self.live_agents
-
-        for a in living_agents:
+        """Run a single timestep of the simulation."""
+        for a in self.live_agents:
+            # view surrounds
             view = self.world.food_grid.view(*a.coords, size=1)  # TODO: change to vision size
-            adj_agents = self.adjacent_agents(a)
+            adj_agents = self.adjacent_agents(a.coords)
+
             next_coord = next_move(a, view, adj_agents)
 
             if next_coord == a.coords:  # agent is stuck/waiting
@@ -234,19 +234,16 @@ class Simulation:
         # TODO: can snapshot here to display respawns before next round of moves
         return len(self.live_agents)
 
-    def adjacent_agents(self, agent):
-        """Scan around given agent for any adjacent agents."""
-
-        def close_range(i):
-            return range(i-1, i+2)
-
-        y, x = agent.coords
-        first_pass = [a for a in self.live_agents if a.coords[0] in close_range(y)]
-        second_pass = [a for a in first_pass if a.coords[1] in close_range(x)]
-
+    def adjacent_agents(self, coords):
+        """Scan around coords for adjacent agents."""
+        exp = (-1, 0, 1)
+        y, x = coords
+        first_pass = [a for a in self.live_agents if a.coords[0] - y in exp]
+        second_pass = [a for a in first_pass if (a.coords[1] - x in exp and
+                                                 not a.coords == coords)]  # <-- ignore self
         adj_agents = {}
         if second_pass:
-            for i, adj_coord in enumerate(adjacent_coords(agent.coords)):
+            for i, adj_coord in enumerate(adjacent_coords(coords)):
                 for a in second_pass:
                     if a.coords == adj_coord:
                         adj_agents[i] = a
