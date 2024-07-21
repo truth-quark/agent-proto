@@ -129,7 +129,7 @@ class Grid(object):
 
     @property
     def shape(self):
-        return (self.nrows, self.ncols)
+        return self.nrows, self.ncols
 
     @property
     def dtype(self):
@@ -137,5 +137,5 @@ class Grid(object):
 
     def view(self, y, x, size):
         """TODO: coords needs to be tuple of ints??"""
-        y, x = [self._offset_coord(i) for i in (y,x)]
+        y, x = [self._offset_coord(i) for i in (y, x)]
         return self._grid[y - size:y + size + 1, x - size:x + size + 1]
