@@ -27,13 +27,25 @@ def zero_energy():
 
 
 def test_next_move_nothing_default_north(agent, zero_energy):
-    agent.id = 0
+    agent.default_dir = 0
     assert next_move(agent, zero_energy) == (1, 3)  # for id=0
 
 
 def test_next_move_nothing(agent, zero_energy):
-    agent.id = 5
+    agent.default_dir = 5
     assert next_move(agent, zero_energy) == (3, 2)
+
+
+def test_next_move_nothing_at_border(agent):
+    agent.default_dir = 0
+    agent.coords = (0, 1)
+
+    energy = np.array([[NODATA, NODATA, NODATA],
+                       [0, 0, NODATA],
+                       [0, 0, NODATA]])
+
+    limits = (1, 1)  # technically a 2x2 grid
+    assert next_move(agent, energy, None, limits) == (1, 0)
 
 
 def test_next_move_with_agents(agent):

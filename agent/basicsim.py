@@ -79,6 +79,7 @@ class Agent:
     metabolism: int
     energy: int = 0
     coords: tuple = None  # TODO move coords to simulation or metadata container?
+    default_dir: int = None
 
     def is_alive(self):
         return self.energy > 0
@@ -96,9 +97,31 @@ def on_end_turn(agent: Agent):
     agent.energy -= agent.metabolism
 
 
-def next_move(agent, view, adj_agents=None):
+# maps default direction to corner direction agent will get jammed in
+CORNER_JAM = {1: 3, 2: 3,
+              3: 5, 4: 5,
+              5: 7, 6: 7,
+              7: 1, 0: 1}
+
+# redirect agents diagonally back towards centre
+NEW_DIRECTION = {0: 5, 1: 7,
+                 2: 7, 3: 1,
+                 4: 1, 5: 3,
+                 6: 3, 7: 5}
+
+
+DIRECTION = {7: "NW", 0: "N", 1: "NE", 2: "E",
+             3: "SE", 4: "S", 5: "SW", 6: "W"}
+
+
+def next_move(agent, view, adj_agents=None, limits=None):
     """Simulates simple searching behaviour by an agent, simply looking for
     the most productive cell in the adjacent cells."""
+
+    # TODO: add 2x2 window view
+    # TODO: add weighting function (in np?) to pick most productive direction
+    # TODO: add agent memory/recall last 'n' productive cells, return there if in no energy zone
+    # TODO: limits is a bit of a hack as next_move() lacks grid shape access
 
     # TODO: look at pushing decision process out to a navigation module?
     #       Could add pluggable nav behaviour/different for each agent
@@ -106,7 +129,37 @@ def next_move(agent, view, adj_agents=None):
     if adj_energy := get_adj_energy(view, adj_agents):
         d = best_direction(adj_energy)
     else:
-        d = search_direction(view, agent.id % 8, adj_agents)
+        # no nearby energy, view default cell to move to
+        y, x = 1 + Y_OFFSETS[agent.default_dir], 1 + X_OFFSETS[agent.default_dir]
+
+        if view[y, x] == NODATA:
+            # default direction is blocked, check for corner blocking
+
+            y_max, x_max = limits
+            jammed_corner_dir = CORNER_JAM[agent.default_dir]
+
+            ay, ax = agent.coords
+            if jammed_corner_dir == 1:
+                cornered = ay == 0 and ax == x_max
+            elif jammed_corner_dir == 3:
+                cornered = ay == y_max and ax == x_max
+            elif jammed_corner_dir == 5:
+                cornered = ay == y_max and ax == 0
+            elif jammed_corner_dir == 7:
+                cornered = ay == 0 and ax == 0
+            else:
+                msg = f"jammed corner dir={jammed_corner_dir}, should be 1,3,5 or 7"
+                raise ValueError(msg)
+
+            if cornered:
+                # msg = (f"{agent.name}, default dir blocked {agent.default_dir}/"
+                #        f"{DIRECTION[agent.default_dir]}, is at {agent.coords}. "
+                #        f"View:\n{view}")
+                # print(msg)
+                agent.default_dir = NEW_DIRECTION[agent.default_dir]
+                # print(f"agent new direction {DIRECTION[agent.default_dir]}")
+
+        d = search_direction(view, agent.default_dir, adj_agents)
 
     y, x = agent.coords
     return y + Y_OFFSETS[d], x + X_OFFSETS[d]  # on world grid
@@ -185,7 +238,12 @@ class Simulation:
     def __init__(self, food_grid, agents, config=None):
         self.world = BasicWorld(food_grid)
         self.agents = agents
+
+        for a in agents:
+            a.default_dir = a.id % 8
+
         self.config = config if config else {}
+        self.limits = tuple(arg - 1 for arg in self.world.food_grid.shape)
 
         # stats
         self.final_round = None
@@ -219,7 +277,7 @@ class Simulation:
             view = self.world.food_grid.view(*a.coords, size=1)  # TODO: change to vision size
             adj_agents = self.adjacent_agents(a.coords)
 
-            next_coord = next_move(a, view, adj_agents)
+            next_coord = next_move(a, view, adj_agents, self.limits)
 
             if next_coord == a.coords:  # agent is stuck/waiting
                 assert self.world.food_grid[next_coord] <= 0
