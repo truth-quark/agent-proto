@@ -45,7 +45,12 @@ class BasicWorld(object):
         self.orig_food_grid = copy.deepcopy(food_grid)
 
     def harvest(self, coords, post_harvest=-1):
-        """Harvests and returns the energy from a cell."""
+        """
+        Harvests and returns the energy from a cell.
+
+        post_harvest specifies the value to leave the cell in, e.g. -10 to
+        specify 10 recovery rounds are needed before energy becomes positive.
+        """
         energy = self.food_grid[coords]
 
         if energy > 0:
@@ -237,6 +242,7 @@ class Simulation:
 
     def __init__(self, food_grid, agents, config=None):
         self.world = BasicWorld(food_grid)
+        self.recovery_time = 25
         self.agents = agents
 
         for a in agents:
@@ -287,7 +293,7 @@ class Simulation:
 
             # TODO: only harvest if energy > 0
             # TODO: add one action per turn logic (move OR harvest OR wait)
-            a.energy += self.world.harvest(a.coords)  # TODO: add recovery time setting
+            a.energy += self.world.harvest(a.coords, -self.recovery_time)
             on_end_turn(a)  # can kill an agent
 
             if a.is_dead():

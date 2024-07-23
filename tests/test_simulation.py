@@ -25,6 +25,7 @@ def sim():
 
 
 def test_simulation_single_step(sim):
+    sim.recovery_time = 1
     sim.do_step()
 
     agent = sim.live_agents[0]
@@ -59,15 +60,6 @@ def test_adjacent_agents(sim):
     sim.agents.extend([agent2, agent3])
     res = sim.adjacent_agents(sim.agents[0].coords)
     assert res == {5: agent2, 7: agent3}
-
-
-# @pytest.mark.skip
-# class HarvestTests(unittest.TestCase):
-#
-#     def setUp(self):
-#         self.sim = sim()
-#         self.agent = self.sim.agents[0]
-#         self.agent.id = 7  # force NW travel
 
 
 DEFAULT_NW_ID = 7
