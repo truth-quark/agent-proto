@@ -21,13 +21,19 @@ def test_next_move(agent):
     assert next_move(agent, view) == (1, 4)  # cell with 3 in it
 
 
-def test_next_move_nothing(agent):
-    agent.id = 0
-    view = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-    assert next_move(agent, view) == (1, 3)  # for id=0
+@pytest.fixture
+def zero_energy():
+    return np.zeros((3, 3))
 
+
+def test_next_move_nothing_default_north(agent, zero_energy):
+    agent.id = 0
+    assert next_move(agent, zero_energy) == (1, 3)  # for id=0
+
+
+def test_next_move_nothing(agent, zero_energy):
     agent.id = 5
-    assert next_move(agent, view) == (3, 2)
+    assert next_move(agent, zero_energy) == (3, 2)
 
 
 def test_next_move_with_agents(agent):
@@ -37,20 +43,19 @@ def test_next_move_with_agents(agent):
     assert next_move(agent, view, adj_agents) == (3, 2)
 
 
-def test_search_direction(agent):
+def test_search_direction(agent, zero_energy):
     # agent's search direction should be based on modulo of id 0=N, 2=E
-    adj_energy = {}
     for i, crd in enumerate(components.adjacent_coords(agent.coords)):
-        search_dir = search_direction(adj_energy, default_direction=i)
+        search_dir = search_direction(zero_energy, default_dir=i)
         assert 0 <= search_dir <= 7
-        assert search_dir == i  # returns default dir as its not the NODATA border
+        assert search_dir == i  # returns default dir as it's not the NODATA border
 
 
-def test_search_direction_nodata(agent):
+def test_search_direction_nodata(agent, zero_energy):
     # Ensure search direction is next best in clockwise compass direction
     direction = 5  # default is SW direction of travel
-    adj_energy = {5: NODATA, 6: NODATA}
-    assert search_direction(adj_energy, direction) == 7  # Head NW
+    zero_energy[1:3, 0] = NODATA
+    assert search_direction(zero_energy, direction) == 7  # Head NW
 
 
 @pytest.mark.skip

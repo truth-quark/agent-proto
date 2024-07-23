@@ -99,67 +99,82 @@ def on_end_turn(agent: Agent):
 def next_move(agent, view, adj_agents=None):
     """Simulates simple searching behaviour by an agent, simply looking for
     the most productive cell in the adjacent cells."""
-    best_energy = NODATA
-    best_dir = -1
-    adj_energy = {}  # cache energy data for possible later search
 
-    # scan around the *local* view looking for energy and agents
-    # TODO: loop approach is clockwise, which biases agent search & move to
-    #       same default every time. Can tweak/make search patterns different
-    #       by agent. ALT: add proximity/vision search to automatically go
-    #       for the weighted best looking area
-    #
     # TODO: look at pushing decision process out to a navigation module?
     #       Could add pluggable nav behaviour/different for each agent
-    for d, adj_coord in enumerate(adjacent_coords((1, 1))):
-        if adj_agents:
-            if adj_agents.get(d):
-                continue  # skip cells occupied by other agents
 
-        energy = view[adj_coord]
-        if energy > 0:
-            adj_energy[d] = energy
-
-            if energy > best_energy:
-                best_energy = energy
-                best_dir = d
-
-        elif energy == NODATA:
-            # cache NODATA cells to prevent illegal agent moves
-            adj_energy[d] = NODATA
-
-    if best_energy > 0:
-        d = best_dir
+    if adj_energy := get_adj_energy(view, adj_agents):
+        d = best_direction(adj_energy)
     else:
-        # must be surrounded by NODATA/bounds or zero energy land
-        if not isinstance(agent.id, int):
-            raise NotImplementedError()
-
-        d = search_direction(adj_energy, default_direction=agent.id % 8)
+        d = search_direction(view, agent.id % 8, adj_agents)
 
     y, x = agent.coords
     return y + Y_OFFSETS[d], x + X_OFFSETS[d]  # on world grid
 
 
-def search_direction(adj_energy, default_direction):
+def get_adj_energy(view, adj_agents=None):
+    # TODO: replace with smarter numpy dual array approach?
+    adj_energy = {}
+
+    for d, adj_coord in enumerate(adjacent_coords((1, 1))):
+        if adj_agents:
+            if adj_agents.get(d):
+                continue  # skip cells occupied by other agents
+
+        if (energy := view[adj_coord]) > 0:
+            adj_energy[d] = energy
+
+    return adj_energy
+
+
+def best_direction(adj_energy: dict):
+    """
+    Scan the adjacent energy view for the highest energy cell.
+
+    This function assumes the adjacent energy dict has been filtered to remove
+    surrounding cells with NODATA or other agents.
+
+    Returns int of best compass direction (0=N, 2=E ...), None if no energy.
+    """
+    # TODO: loop approach is clockwise, which biases agent search & move to
+    #       same default every time. Can tweak/make search patterns different
+    #       by agent. ALT: add proximity/vision search to automatically go
+    #       for the weighted best looking area
+
+    best_energy = 0
+    best_dir = None
+
+    for direction, energy in adj_energy.items():
+        if energy > best_energy:
+            best_energy = energy
+            best_dir = direction
+
+    return best_dir  # is None if no energy in any direction
+
+
+def search_direction(view: np.array, default_dir, adj_agents=None):
     # no energy nearby, so move in first possible direction using id as seed
     # won't always work well as some agents will run around borders
     #
     # TODO: better deterministic search algorithm
     # TODO: experiment with more intelligent agents (climb hill or follow river)
     # TODO: fix agents getting stuck in corners/repeating same move
-    assert 0 <= default_direction <= 7
-    direction = default_direction
 
-    for _ in range(8):  # scan all directions & pick 1st direction from initial seed
-        direction %= 8
-        if adj_energy.get(direction) != NODATA:
-            return direction
+    assert 0 <= default_dir <= 7
 
-        direction += 1
+    data = {d: view[coord] for d, coord in enumerate(adjacent_coords((1, 1)))
+            if view[coord] != NODATA}
+
+    if adj_agents:
+        for d in adj_agents:
+            del data[d]  # remove moves to occupied cells
+
+    for offset in range(8):
+        d = (default_dir + offset) % 8  # start at default direction & rotate
+        if data.get(d, NODATA) != NODATA:
+            return d
 
     # HACK: as final option, have agent not move/wait for energy respawn?
-    # return self.coords
     raise NotImplementedError('Add better search algorithm')
 
 
@@ -210,7 +225,6 @@ class Simulation:
                 assert self.world.food_grid[next_coord] <= 0
 
             self.move_history[a.id].append(a.coords)
-
             a.coords = next_coord
 
             # TODO: only harvest if energy > 0
@@ -225,7 +239,7 @@ class Simulation:
         if hasattr(self, 'take_snapshot'):
             # snapshots here show agents that just died
             # TODO: sometimes can't see fully respawned cells as agents move onto them
-            self.take_snapshot.send(living_agents)
+            self.take_snapshot.send(self.live_agents)
 
         if self.live_agents:
             self.collect_stats()
