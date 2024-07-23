@@ -51,6 +51,7 @@ class BasicWorld(object):
         post_harvest specifies the value to leave the cell in, e.g. -10 to
         specify 10 recovery rounds are needed before energy becomes positive.
         """
+        assert post_harvest <= 0
         energy = self.food_grid[coords]
 
         if energy > 0:
@@ -259,8 +260,7 @@ class Simulation:
 
         # viz coroutine
         # TODO: coroutine decorator?
-        _dir = self.config.get('VIZ_OUTPUT_DIR')
-        if _dir:
+        if _dir := self.config.get('VIZ_OUTPUT_DIR'):
             self.take_snapshot = viz.snapshot_image(self.world.food_grid, _dir, scale=10)
             self.take_snapshot.__next__()
 
@@ -283,18 +283,22 @@ class Simulation:
             view = self.world.food_grid.view(*a.coords, size=1)  # TODO: change to vision size
             adj_agents = self.adjacent_agents(a.coords)
 
-            next_coord = next_move(a, view, adj_agents, self.limits)
+            # use one action per turn logic (move OR harvest OR wait)
+            # assume arrival at this cell from last turn
+            harvested = self.world.harvest(a.coords, -self.recovery_time)
 
-            if next_coord == a.coords:  # agent is stuck/waiting
-                assert self.world.food_grid[next_coord] <= 0
+            if harvested:
+                a.energy += harvested
+            else:
+                next_coord = next_move(a, view, adj_agents, self.limits)
 
-            self.move_history[a.id].append(a.coords)
-            a.coords = next_coord
+                if next_coord == a.coords:  # agent is stuck/waiting  # TODO: remove as old?
+                    assert self.world.food_grid[next_coord] <= 0
 
-            # TODO: only harvest if energy > 0
-            # TODO: add one action per turn logic (move OR harvest OR wait)
-            a.energy += self.world.harvest(a.coords, -self.recovery_time)
-            on_end_turn(a)  # can kill an agent
+                self.move_history[a.id].append(a.coords)
+                a.coords = next_coord
+
+            on_end_turn(a)  # can kill agent
 
             if a.is_dead():
                 # cache view where the agent died for reporting

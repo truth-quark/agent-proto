@@ -26,12 +26,15 @@ def sim():
 
 def test_simulation_single_step(sim):
     sim.recovery_time = 1
-    sim.do_step()
-
     agent = sim.live_agents[0]
+    start_energy = agent.energy
+
+    for _ in range(2):
+        sim.do_step()  # 1st step to move, 2nd to harvest
+
     assert len(sim.live_agents) == 1
     assert agent.coords == (1, 1)
-    assert agent.energy == 21  # loses 1, gains 1
+    assert agent.energy == start_energy + 1 - 2  # loses 2, gains 1
 
     # check the world
     assert sim.world.food_grid[1, 1] == 0  # harvested & should respawn 1 point
