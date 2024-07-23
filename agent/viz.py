@@ -24,7 +24,8 @@ def image_dump(grid, agents, path, scale=1):
     """"Dumps a single image of the simulation to a file."""
     raw = grid._grid[1:-1, 1:-1]  # TODO: pass in without borders?
     mono = monochrome_remap(raw, agents)
-    final = upscale(mono, scale) if scale > 1 else mono
+    larger = enlarged(mono, scale) if scale > 1 else mono
+    final = add_agents(larger, agents, scale)
     image = Image.fromarray(final)
     image.save(path)
 
@@ -37,14 +38,24 @@ def monochrome_remap(raw, agents):
     data[raw == 2] = 150
     data[raw == 3] = 100
     data[raw == 4] = 50
-
-    # represent agents as black dot
-    for a in agents:
-        data[a.coords] = 0
     return data
 
 
-def upscale(data, factor):
+def add_agents(grid, agents, scale):
+    # "Draw" agents into grid array, represented as a black dot
+    # agent size should be smaller than a grid cell
+    half_scale = int(scale/2)
+    part_scale = int(scale/4)
+    assert part_scale > 1
+
+    for a in agents:
+        y, x = [(c * scale) + half_scale for c in a.coords]
+        grid[y - part_scale: y + part_scale, x - part_scale: x + part_scale] = 0
+
+    return grid
+
+
+def enlarged(data, factor):
     """Scale an array up in size."""
     assert factor
     ys, xs = [i*factor for i in data.shape]
