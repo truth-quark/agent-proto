@@ -135,13 +135,13 @@ def next_move(agent, view, adj_agents=None):
         if not isinstance(agent.id, int):
             raise NotImplementedError()
 
-        d = _search_direction(adj_energy, default_direction=agent.id % 8)
+        d = search_direction(adj_energy, default_direction=agent.id % 8)
 
     y, x = agent.coords
     return y + Y_OFFSETS[d], x + X_OFFSETS[d]  # on world grid
 
 
-def _search_direction(adj_energy, default_direction):
+def search_direction(adj_energy, default_direction):
     # no energy nearby, so move in first possible direction using id as seed
     # won't always work well as some agents will run around borders
     #
