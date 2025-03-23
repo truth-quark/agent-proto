@@ -23,14 +23,14 @@ def snapshot_image(grid, _dir, scale=1):
 def image_dump(grid, agents, path, scale=1):
     """"Dumps a single image of the simulation to a file."""
     raw = grid._grid[1:-1, 1:-1]  # TODO: pass in without borders?
-    mono = monochrome_remap(raw, agents)
+    mono = monochrome_remap(raw)
     larger = enlarged(mono, scale) if scale > 1 else mono
     final = add_agents(larger, agents, scale)
     image = Image.fromarray(final)
     image.save(path)
 
 
-def monochrome_remap(raw, agents):
+def monochrome_remap(raw):
     """Quick & dirty function to map BasicSim world to 0-255 colour array."""
     data = np.zeros(raw.shape, dtype=np.uint8)
     data[raw <= 0] = 255
