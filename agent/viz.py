@@ -22,22 +22,22 @@ def snapshot_image(grid, _dir, scale=1):
 
 def image_dump(grid, agents, path, scale=1):
     """"Dumps a single image of the simulation to a file."""
-    raw = grid._grid[1:-1, 1:-1]  # TODO: pass in without borders?
-    mono = monochrome_remap(raw)
+    raw_grid = grid._grid[1:-1, 1:-1]  # TODO: pass in without borders?
+    mono = monochrome_remap(raw_grid)
     larger = enlarged(mono, scale) if scale > 1 else mono
     final = add_agents(larger, agents, scale)
     image = Image.fromarray(final)
     image.save(path)
 
 
-def monochrome_remap(raw):
+def monochrome_remap(raw_grid):
     """Quick & dirty function to map BasicSim world to 0-255 colour array."""
-    data = np.zeros(raw.shape, dtype=np.uint8)
-    data[raw <= 0] = 255
-    data[raw == 1] = 200
-    data[raw == 2] = 150
-    data[raw == 3] = 100
-    data[raw == 4] = 50
+    data = np.zeros(raw_grid.shape, dtype=np.uint8)
+    data[raw_grid <= 0] = 255
+    data[raw_grid == 1] = 200
+    data[raw_grid == 2] = 150
+    data[raw_grid == 3] = 100
+    data[raw_grid == 4] = 50
     return data
 
 
