@@ -46,7 +46,7 @@ def add_agents(grid, agents, scale):
     # agent size should be smaller than a grid cell
     half_scale = int(scale/2)
     part_scale = int(scale/4)
-    assert part_scale > 1
+    assert part_scale > 1, "Cannot scale agent below width=1, increase scale."
 
     for a in agents:
         y, x = [(c * scale) + half_scale for c in a.coords]
